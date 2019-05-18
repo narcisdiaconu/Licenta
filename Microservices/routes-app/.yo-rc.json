@@ -1,0 +1,34 @@
+{
+  "generator-jhipster": {
+    "promptValues": {
+      "packageName": "com.busticketbooking.routes"
+    },
+    "jhipsterVersion": "5.8.2",
+    "applicationType": "microservice",
+    "baseName": "routes",
+    "packageName": "com.busticketbooking.routes",
+    "packageFolder": "com/busticketbooking/routes",
+    "serverPort": "8083",
+    "authenticationType": "jwt",
+    "cacheProvider": "no",
+    "websocket": false,
+    "databaseType": "sql",
+    "devDatabaseType": "h2Disk",
+    "prodDatabaseType": "mssql",
+    "searchEngine": false,
+    "messageBroker": false,
+    "serviceDiscoveryType": "eureka",
+    "buildTool": "maven",
+    "enableSwaggerCodegen": false,
+    "jwtSecretKey": "YzM4NjQzNzk0OWNiNjA2YjVlMjBhNTUzOTBkMjg2YzZmOTU3YzRkMjBkZTM3MGQzYzY5ODM1ZTkzYjZmZTg3ZDU3Yzg3YWMzODYwZTFmNDcwMzA5Y2YwNjQ0NGIwZDQwYWJlOTQ1NTU5NTEwM2EwYjE1OTgwOTYzYTIzNzZiNmM=",
+    "testFrameworks": [],
+    "jhiPrefix": "jhi",
+    "entitySuffix": "",
+    "dtoSuffix": "DTO",
+    "otherModules": [],
+    "enableTranslation": false,
+    "clientPackageManager": "npm",
+    "skipClient": true,
+    "skipUserManagement": true
+  }
+}

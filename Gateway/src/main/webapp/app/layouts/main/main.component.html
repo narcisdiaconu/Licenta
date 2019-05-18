@@ -1,0 +1,15 @@
+<div>
+    <router-outlet name="navbar"></router-outlet>
+</div>
+<div class="container-fluid" *ngIf="isHome()">
+    <router-outlet></router-outlet>
+    <router-outlet name="popup"></router-outlet>
+    <jhi-footer></jhi-footer>
+</div>
+<div class="container-fluid" *ngIf="!isHome()">
+    <div class="card jh-card">
+        <router-outlet></router-outlet>
+        <router-outlet name="popup"></router-outlet>
+    </div>
+    <jhi-footer></jhi-footer>
+</div>

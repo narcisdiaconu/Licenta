@@ -1,0 +1,45 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="busStop">
+            <h2><span>Bus Stop</span> {{busStop.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span>Station</span></dt>
+                <dd>
+                    <span>{{busStop.station}}</span>
+                </dd>
+                <dt><span>Arrival Time</span></dt>
+                <dd>
+                    <span>{{busStop.arrivalTime}}</span>
+                </dd>
+                <dt><span>Departure Time</span></dt>
+                <dd>
+                    <span>{{busStop.departureTime}}</span>
+                </dd>
+                <dt><span>Price</span></dt>
+                <dd>
+                    <span>{{busStop.price}}</span>
+                </dd>
+                <dt><span>Bus</span></dt>
+                <dd>
+                    <div *ngIf="busStop.busId">
+                        <a [routerLink]="['/bus', busStop.busId, 'view']">{{busStop.busId}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/bus-stop', busStop.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

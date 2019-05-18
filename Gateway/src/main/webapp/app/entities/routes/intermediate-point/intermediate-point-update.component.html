@@ -1,0 +1,65 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-intermediate-point-heading">Create or edit a Intermediate Point</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!intermediatePoint.id">
+                    <label for="id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="intermediatePoint.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_index">Index</label>
+                    <input type="number" class="form-control" name="index" id="field_index"
+                        [(ngModel)]="intermediatePoint.index" required min="1" jhiMin="1"/>
+                    <div [hidden]="!(editForm.controls.index?.dirty && editForm.controls.index?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.index?.errors?.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.index?.errors?.min">
+                            This field should be at least 1.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.index?.errors?.number">
+                            This field should be a number.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_station">Station</label>
+                    <input type="number" class="form-control" name="station" id="field_station"
+                        [(ngModel)]="intermediatePoint.station" required/>
+                    <div [hidden]="!(editForm.controls.station?.dirty && editForm.controls.station?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.station?.errors?.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.station?.errors?.number">
+                            This field should be a number.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" for="field_route">Route</label>
+                    <select class="form-control" id="field_route" name="route" [(ngModel)]="intermediatePoint.routeId" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="routeOption.id" *ngFor="let routeOption of routes; trackBy: trackRouteById">{{routeOption.id}}</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span>Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span>Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

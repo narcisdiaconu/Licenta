@@ -1,0 +1,67 @@
+<div class="main-container">
+    <div class="card jh-card">
+        <div class="nav">
+            <p class="welcome">Welcome</p>
+        </div>
+
+        <div class="row" *ngIf="isAuthenticated()">
+            <div class="col-2 col-md-4 col-sm-3 col-lg-4">
+                <!-- <div class="list-container col-6">
+                    <ul class="list-group">
+                        <li id="Route" class="list-group-item active" (click)="changeView('Route')">Online booking</li>
+                        <li id="T&C" class="list-group-item" (click)="changeView('T&C')">Terms and conditions</li>
+                    </ul>
+                </div> -->
+            </div>
+            <div class="col-8 col-md-4 col-sm-6 col-lg-4">
+                <div [ngSwitch]="getView()">
+                    <form class="form-group main-search" name="mainForm" #mainForm="ngForm" *ngSwitchCase="'Route'">
+                        <h5 class="font-weight-bold">Choose your route</h5>
+                        <label class="form-control-label" for="start_city">From</label>
+                        <ng-template #startCityTemp let-r="result" let-t="term">
+                            <ngb-highlight [result]="r.name" [term]="t"></ngb-highlight>
+                        </ng-template>
+                        <input id="start_city" type="text" class="form-control" name="startCityInput" [(ngModel)]="startCity" required [ngbTypeahead]="search" [resultTemplate]="startCityTemp" [inputFormatter]="formatter">
+
+                        <label class="form-control-label" for="end_city">To</label>
+                        <input id="end_city" type="text" class="form-control" name="endCityInput" [(ngModel)]="endCity" required [ngbTypeahead]="search" [resultTemplate]="startCityTemp" [inputFormatter]="formatter">
+                        <label class="form-control-label" for="date_picker">Date</label>
+                        <div class="input-group">
+                            <input class="form-control" id="date_picker" placeholder="yyyy-mm-dd" name="dp" [(ngModel)]="dateModel" ngbDatepicker #d="ngbDatepicker" required>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" (click)="d.toggle()" type="button"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                            </div>
+                        </div>
+
+                        <ng-template #departureHourTemplate>
+                            <ngb-timepicker [(ngModel)]="departureHour" name="departurePicker" [showMeridian]="false"></ngb-timepicker>
+                        </ng-template>
+                        <ng-template #arrivalHourTemplate>
+                            <ngb-timepicker [(ngModel)]="arrivalHour" name="arrivalPicker" [showMeridian]="false"></ngb-timepicker>
+                        </ng-template>
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <label class="form-control-label">Departure hour</label>
+                                <input class="form-control" id="departure_hour" [ngModel]="convertTimeToString(departureHour)" [ngbPopover]="departureHourTemplate" name="departure" [autoClose]="'outside'" required>
+                            </div>
+                            <!-- <div class="col-md-6">
+                        <label class="form-control-label">Arrival hour</label>
+                        <input class="form-control" id="arrival_hour" [ngModel]="convertToString(arrivalHour)" [ngbPopover]="arrivalHourTemplate" [autoClose]="'outside'">
+                    </div> -->
+                        </div><br>
+
+                        <button type="submit" id="save-entity" class="btn btn-primary" (click)="toBuses()" [disabled]="mainForm.form.invalid">
+                            <fa-icon [icon]="'search'"></fa-icon>&nbsp;<span>Search</span>
+                        </button>
+                    </form>
+
+                    <div *ngSwitchCase="'T&C'">
+                        Terms and conditions
+                    </div>
+                </div>
+            </div>
+            <div class="col-2 col-md-4 col-sm-3 col-lg-4">
+            </div>
+        </div>
+    </div>
+</div>

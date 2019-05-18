@@ -1,0 +1,70 @@
+<div>
+    <h2 id="page-heading">
+        <span>Intermediate Points</span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-intermediate-point" [routerLink]="['/intermediate-point/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span >
+            Create new Intermediate Point
+            </span>
+        </button>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <br/>
+    <div class="table-responsive" *ngIf="intermediatePoints">
+        <table class="table table-striped">
+            <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
+            <th jhiSortBy="id"><span>ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="index"><span>Index</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="station"><span>Station</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="routeId"><span>Route</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let intermediatePoint of intermediatePoints ;trackBy: trackId">
+                <td><a [routerLink]="['/intermediate-point', intermediatePoint.id, 'view' ]">{{intermediatePoint.id}}</a></td>
+                <td>{{intermediatePoint.index}}</td>
+                <td>{{intermediatePoint.station}}</td>
+                <td>
+                    <div *ngIf="intermediatePoint.routeId">
+                        <a [routerLink]="['../route', intermediatePoint.routeId , 'view' ]" >{{intermediatePoint.routeId}}</a>
+                    </div>
+                </td>
+                <td class="text-right">
+                    <div class="btn-group flex-btn-group-container">
+                        <button type="submit"
+                                [routerLink]="['/intermediate-point', intermediatePoint.id, 'view' ]"
+                                class="btn btn-info btn-sm">
+                            <fa-icon [icon]="'eye'"></fa-icon>
+                            <span class="d-none d-md-inline">View</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/intermediate-point', intermediatePoint.id, 'edit']"
+                                class="btn btn-primary btn-sm">
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                            <span class="d-none d-md-inline">Edit</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/', 'intermediate-point', { outlets: { popup: intermediatePoint.id + '/delete'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm">
+                            <fa-icon [icon]="'times'"></fa-icon>
+                            <span class="d-none d-md-inline">Delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div *ngIf="intermediatePoints && intermediatePoints.length">
+        <div class="row justify-content-center">
+            <jhi-item-count [page]="page" [total]="totalItems" [maxSize]="5" [itemsPerPage]="itemsPerPage"></jhi-item-count>
+        </div>
+        <div class="row justify-content-center">
+            <ngb-pagination [collectionSize]="totalItems" [(page)]="page" [pageSize]="itemsPerPage" [maxSize]="5" [rotate]="true" [boundaryLinks]="true" (pageChange)="loadPage(page)"></ngb-pagination>
+        </div>
+    </div>
+</div>

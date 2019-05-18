@@ -1,0 +1,73 @@
+/* ==========================================================================
+Main page styles
+========================================================================== */
+
+.hipster {
+    display: inline-block;
+    width: 347px;
+    height: 497px;
+    background: url('../../content/images/jhipster_family_member_0.svg') no-repeat center top;
+    background-size: contain;
+}
+
+.main-search {
+    border: 1px;
+    border-radius: 1%;
+    padding: 20pt;
+    background-color: white;
+}
+
+.background-image {
+    background-image: url('../../content/images/home.jpg') no-repeat center top;
+}
+
+.main-container {
+    background: url('../../content/images/home_high_blur.jpg') no-repeat;
+    background-size: cover;
+    width: 100%;
+    height: 100%;
+}
+
+.card {
+    background: transparent;
+}
+
+.jh-card {
+    margin-top: 0;
+}
+
+.nav {
+    width: 100%;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
+.welcome {
+    font-weight: bold;
+    font-size: 22pt;
+    color: #000000;
+}
+
+.list-container {
+    margin: 20% 0 20% 10%;
+    float: right;
+}
+
+.list-group-item {
+    cursor: pointer;
+}
+
+/* wait autoprefixer update to allow simple generation of high pixel density media query */
+
+@media only screen and (-webkit-min-device-pixel-ratio: 2),
+    only screen and (-moz-min-device-pixel-ratio: 2),
+    only screen and (-o-min-device-pixel-ratio: 2/1),
+    only screen and (min-resolution: 192dpi),
+    only screen and (min-resolution: 2dppx) {
+    .hipster {
+        background: url('../../content/images/jhipster_family_member_0.svg') no-repeat center top;
+        background-size: contain;
+    }
+}

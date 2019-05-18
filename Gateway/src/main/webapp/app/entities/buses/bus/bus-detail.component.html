@@ -1,0 +1,47 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="bus">
+            <h2><span>Bus</span> {{bus.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span>Route</span></dt>
+                <dd>
+                    <span>{{bus.route}}</span>
+                </dd>
+                <dt><span>Price</span></dt>
+                <dd>
+                    <span>{{bus.price}}</span>
+                </dd>
+                <dt><span>Total Places</span></dt>
+                <dd>
+                    <span>{{bus.totalPlaces}}</span>
+                </dd>
+                <dt><span>Departure Time</span></dt>
+                <dd>
+                    <span>{{bus.departureTime}}</span>
+                </dd>
+                <dt><span>Arrival Time</span></dt>
+                <dd>
+                    <span>{{bus.arrivalTime}}</span>
+                </dd>
+                <dt><span>Days</span></dt>
+                <dd>
+                    <span>{{bus.days}}</span>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/bus', bus.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,37 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="intermediatePoint">
+            <h2><span>Intermediate Point</span> {{intermediatePoint.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span>Index</span></dt>
+                <dd>
+                    <span>{{intermediatePoint.index}}</span>
+                </dd>
+                <dt><span>Station</span></dt>
+                <dd>
+                    <span>{{intermediatePoint.station}}</span>
+                </dd>
+                <dt><span>Route</span></dt>
+                <dd>
+                    <div *ngIf="intermediatePoint.routeId">
+                        <a [routerLink]="['/route', intermediatePoint.routeId, 'view']">{{intermediatePoint.routeId}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/intermediate-point', intermediatePoint.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

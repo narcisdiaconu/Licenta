@@ -1,0 +1,36 @@
+{
+    "generator-jhipster": {
+        "promptValues": {
+            "packageName": "com.gateway",
+            "microservicePath": "../Microservices/buses-app"
+        },
+        "jhipsterVersion": "5.8.2",
+        "applicationType": "gateway",
+        "baseName": "Gateway",
+        "packageName": "com.gateway",
+        "packageFolder": "com/gateway",
+        "serverPort": "8080",
+        "authenticationType": "jwt",
+        "cacheProvider": "hazelcast",
+        "enableHibernateCache": false,
+        "websocket": false,
+        "databaseType": "sql",
+        "devDatabaseType": "h2Disk",
+        "prodDatabaseType": "mssql",
+        "searchEngine": false,
+        "messageBroker": false,
+        "serviceDiscoveryType": "eureka",
+        "buildTool": "maven",
+        "enableSwaggerCodegen": false,
+        "jwtSecretKey": "N2ZmNWI3ZDAzZWU3YTNmYTA4ZDg5NmQzNTg2YWRlNjdiNDhiODhjNDIxZDVmMjY2ZmExMzdjNjYxZGMyNjg1MzQ5ZjZmODNmMjE0NjQxNjE4YTNmNGQ3Nzk3NzA4NTI1MTQ0ZGVkNzYxZDhiODVlYjc5ZmI4YzA2YjUzNzNiOWE=",
+        "clientFramework": "angularX",
+        "useSass": false,
+        "clientPackageManager": "npm",
+        "testFrameworks": [],
+        "jhiPrefix": "jhi",
+        "entitySuffix": "",
+        "dtoSuffix": "DTO",
+        "otherModules": [],
+        "enableTranslation": false
+    }
+}
