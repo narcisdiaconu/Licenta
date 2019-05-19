@@ -23,6 +23,7 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
                 '/stations',
                 '/routes',
                 '/buses',
+                '/tickets',
                 /* jhipster-needle-add-entity-to-webpack - JHipster will add entity api paths here */
                 '/api',
                 '/management',

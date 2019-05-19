@@ -39,10 +39,12 @@
                         <span>Empty seats: <b>{{selectedBus.remainingSeats}}/{{selectedBus.bus.totalPlaces}}</b></span>
                     </div>
 
-                    <a (click)="showBusStops = !showBusStops" [hidden]="showBusStops">Show intermediate stops</a>
-                    <a (click)="showBusStops = !showBusStops" [hidden]="!showBusStops">Hide intermediate stops</a>
+                    <a (click)="showBusStops = !showBusStops" [hidden]="showBusStops" *ngIf="getStopsForCurrentBus()
+                    !== undefined">Show intermediate stops</a>
+                    <a (click)="showBusStops = !showBusStops" [hidden]="!showBusStops" *ngIf="getStopsForCurrentBus() !== undefined">Hide intermediate stops</a>
                     <div class="bus-stops" [hidden]="!showBusStops">
-                        <div *ngFor="let stop of selectedBus.bus.busStops">
+                        <!-- <div *ngFor="let stop of selectedBus.bus.busStops"> -->
+                        <div *ngFor="let stop of getStopsForCurrentBus()">
                             <fa-icon icon="circle" class="fa-sm color-purple bus-stop-icon"></fa-icon>
                             <span class="location">{{getStationById(stop.station).name}}, {{getCityByStation(stop.station).name}} <span class="time">{{stop.arrivalTime}}</span></span>
                         </div>
@@ -56,8 +58,8 @@
                 </div>
             </div>
 
-            <div class="all-data" [hidden]="showMapView">
-
+            <div class="all-data">
+                <button type="submit" id="booking-button" class="btn btn-primary" (click)="toBooking()">Book now</button>
             </div>
             <!-- {{selectedBus | json}} -->
             <div class="mapbox" id="mapbox" [hidden]="!showMapView"></div>

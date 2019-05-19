@@ -120,6 +120,7 @@ public class BusResource {
 
     @GetMapping("/buses/route/{route}")
     public ResponseEntity<List<BusDTO>> getBusesByRoute(Pageable pageable, @PathVariable Long route) {
+        log.debug("REST request to get a page of Buses on route : {}", route);
         Page<BusDTO> page = busService.findByRoute(pageable, route);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/buses");
         return ResponseEntity.ok().headers(headers).body(page.getContent());

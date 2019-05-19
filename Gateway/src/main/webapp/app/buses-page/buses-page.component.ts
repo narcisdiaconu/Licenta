@@ -19,7 +19,6 @@ import { IBusStop } from 'app/shared/model/buses/bus-stop.model';
 import { ICity } from 'app/shared/model/stations/city.model';
 import { CityService } from 'app/entities/stations/city';
 import { Coordinate, Profiles, GeoJson } from 'app/shared/map/map.geojson';
-import { IDirection } from 'app/shared/map/map.directions';
 
 @Component({
     selector: 'jhi-buses-page',
@@ -58,7 +57,7 @@ export class BusesPageComponent implements OnInit {
         this.showMapView = false;
         this.showBusStops = false;
         this.buses = [];
-        this.dataService.getMockedData().subscribe(data => {
+        this.dataService.getData().subscribe(data => {
             if (data.route === undefined) {
                 this.router.navigate(['']);
             }
@@ -126,8 +125,8 @@ export class BusesPageComponent implements OnInit {
 
     private getBuses(data) {
         this.busService.getByRoute(data.route.id).subscribe((res: HttpResponse<IBus[]>) => {
-            // const date = new Date(this.data.route.date);
-            const date = new Date(this.data.route.date.year, this.data.route.date.month, this.data.route.date.day);
+            const date = new Date(this.data.route.date);
+            // const date = new Date(this.data.route.date.year, this.data.route.date.month, this.data.route.date.day);
             let day = date.getDay();
             if (day === 0) {
                 day = 7;
@@ -135,7 +134,7 @@ export class BusesPageComponent implements OnInit {
 
             const buses = this.filterByDate(
                 res.body.filter(bus => {
-                    return bus.route === data.route.id && bus.departureTime >= this.data.route.hour;
+                    return bus.departureTime >= this.data.route.hour;
                 }),
                 day
             );
@@ -150,8 +149,10 @@ export class BusesPageComponent implements OnInit {
                     return 0;
                 });
             });
-            this.selectedBus = this.buses[0];
-            this.loadIntermediateStops(this.selectedBus);
+            if (this.buses.length > 0) {
+                this.selectedBus = this.buses[0];
+                this.loadIntermediateStops(this.selectedBus);
+            }
         });
     }
 
@@ -179,6 +180,24 @@ export class BusesPageComponent implements OnInit {
             resultMinute = 60 + resultMinute;
         }
         return resultHour + ':' + resultMinute;
+    }
+
+    getStopsForCurrentBus() {
+        const result: IBusStop[] = [];
+        const stops = this.selectedBus.bus.busStops;
+        if (stops === undefined) {
+            return undefined;
+        }
+        for (let index = 0; index < stops.length; index++) {
+            if (stops[index].station === this.selectedBus.end.id) {
+                break;
+            }
+            result.push(stops[index]);
+        }
+        if (result.length === 0) {
+            return undefined;
+        }
+        return result;
     }
 
     changeSelected(bus: BusModel) {
@@ -270,7 +289,7 @@ export class BusesPageComponent implements OnInit {
             if (this.selectedBus.directions === undefined) {
                 this.getDirections(this.selectedBus);
             } else {
-                this.drawDirectionOnMap();
+                this.drawDirectionOnMap(this.selectedBus);
             }
         }
     }
@@ -319,5 +338,12 @@ export class BusesPageComponent implements OnInit {
             center: geojson.geometry.coordinates[0],
             zoom: 8
         });
+    }
+
+    public toBooking() {
+        this.selectedBus.directions = undefined;
+        this.data.buses = [this.selectedBus];
+        this.dataService.updateData(this.data);
+        this.router.navigate(['/booking-page']);
     }
 }

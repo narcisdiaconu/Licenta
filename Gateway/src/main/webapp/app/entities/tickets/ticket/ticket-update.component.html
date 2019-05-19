@@ -1,0 +1,135 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-ticket-heading">Create or edit a Ticket</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!ticket.id">
+                    <label for="id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="ticket.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_user">User</label>
+                    <input type="number" class="form-control" name="user" id="field_user"
+                        [(ngModel)]="ticket.user" required/>
+                    <div [hidden]="!(editForm.controls.user?.dirty && editForm.controls.user?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.user?.errors?.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.user?.errors?.number">
+                            This field should be a number.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_bus">Bus</label>
+                    <input type="number" class="form-control" name="bus" id="field_bus"
+                        [(ngModel)]="ticket.bus" required/>
+                    <div [hidden]="!(editForm.controls.bus?.dirty && editForm.controls.bus?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.bus?.errors?.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.bus?.errors?.number">
+                            This field should be a number.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_date">Date</label>
+                    <div class="input-group">
+                        <input id="field_date" type="text" class="form-control" name="date" ngbDatepicker  #dateDp="ngbDatepicker" [(ngModel)]="ticket.date"
+                        required/>
+                        <span class="input-group-append">
+                            <button type="button" class="btn btn-secondary" (click)="dateDp.toggle()"><fa-icon [icon]="'calendar-alt'"></fa-icon></button>
+                        </span>
+                    </div>
+                    <div [hidden]="!(editForm.controls.date?.dirty && editForm.controls.date?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.date?.errors?.required">
+                        This field is required.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_places">Places</label>
+                    <input type="number" class="form-control" name="places" id="field_places"
+                        [(ngModel)]="ticket.places" required/>
+                    <div [hidden]="!(editForm.controls.places?.dirty && editForm.controls.places?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.places?.errors?.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.places?.errors?.number">
+                            This field should be a number.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_price">Price</label>
+                    <input type="number" class="form-control" name="price" id="field_price"
+                        [(ngModel)]="ticket.price" required/>
+                    <div [hidden]="!(editForm.controls.price?.dirty && editForm.controls.price?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.price?.errors?.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.price?.errors?.number">
+                            This field should be a number.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_paid">Paid</label>
+                    <input type="checkbox" class="form-control" name="paid" id="field_paid"
+                        [(ngModel)]="ticket.paid" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_startStation">Start Station</label>
+                    <input type="number" class="form-control" name="startStation" id="field_startStation"
+                        [(ngModel)]="ticket.startStation" required/>
+                    <div [hidden]="!(editForm.controls.startStation?.dirty && editForm.controls.startStation?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.startStation?.errors?.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.startStation?.errors?.number">
+                            This field should be a number.
+                        </small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" for="field_endStation">End Station</label>
+                    <input type="number" class="form-control" name="endStation" id="field_endStation"
+                        [(ngModel)]="ticket.endStation" required/>
+                    <div [hidden]="!(editForm.controls.endStation?.dirty && editForm.controls.endStation?.invalid)">
+                        <small class="form-text text-danger"
+                        [hidden]="!editForm.controls.endStation?.errors?.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger"
+                            [hidden]="!editForm.controls.endStation?.errors?.number">
+                            This field should be a number.
+                        </small>
+                    </div>
+                </div>
+
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span>Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span>Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

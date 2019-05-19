@@ -1,0 +1,55 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="ticket">
+            <h2><span>Ticket</span> {{ticket.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span>User</span></dt>
+                <dd>
+                    <span>{{ticket.user}}</span>
+                </dd>
+                <dt><span>Bus</span></dt>
+                <dd>
+                    <span>{{ticket.bus}}</span>
+                </dd>
+                <dt><span>Date</span></dt>
+                <dd>
+                    <span>{{ticket.date}}</span>
+                </dd>
+                <dt><span>Places</span></dt>
+                <dd>
+                    <span>{{ticket.places}}</span>
+                </dd>
+                <dt><span>Price</span></dt>
+                <dd>
+                    <span>{{ticket.price}}</span>
+                </dd>
+                <dt><span>Paid</span></dt>
+                <dd>
+                    <span>{{ticket.paid}}</span>
+                </dd>
+                <dt><span>Start Station</span></dt>
+                <dd>
+                    <span>{{ticket.startStation}}</span>
+                </dd>
+                <dt><span>End Station</span></dt>
+                <dd>
+                    <span>{{ticket.endStation}}</span>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/ticket', ticket.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

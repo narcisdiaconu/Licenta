@@ -1,0 +1,108 @@
+<div class="row justify-content-center">
+    <div class="col-11 col-md-9 col-sm-11">
+        <h3><span class="title">Booking details</span></h3>
+        <h5>Buses:</h5>
+
+        <div class="buses-details col-12 col-md-8 col-lg-8" *ngFor="let bus of buses">
+            <div class="bus-details">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th scope="row">From</th>
+                            <td>
+                                <span><b>{{data.route.from.name}}</b></span><br>
+                                <span>{{bus.start.name}}</span>
+                            </td>
+                            <td>
+                                {{bus.bus.departureTime}}
+                            </td>
+                            <td>
+                                {{convertDateToString(bus.date)}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">To</th>
+                            <td>
+                                <span><b>{{data.route.to.name}}</b></span><br>
+                                <span>{{bus.end.name}}</span>
+                            </td>
+                            <td>
+                                {{bus.bus.arrivalTime}}
+                            </td>
+                            <td>
+                                <span>{{convertDateToString(bus.date)}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <span class="h6">Price per ticket: <b>{{getFinalPrice(bus.bus)}}</b></span><br>
+                <span class="h6">Remaining seats: <b>{{bus.remainingSeats}}</b></span>
+            </div>
+        </div>
+
+        <div class="user-details">
+            <h5>Person details</h5>
+            <form name="form" role="form" (ngSubmit)="book()" #settingsForm="ngForm" *ngIf="userDetails" novalidate>
+
+                <div class="form-row align-items-center">
+
+                    <div class="col-auto">
+                        <label class="form-control-label" for="firstName">First Name</label>
+                        <input type="text" class="form-control" id="firstName" name="firstName" placeholder="Your first name" [(ngModel)]="userDetails.firstName" #firstNameInput="ngModel" required>
+                        <div *ngIf="firstNameInput.dirty && firstNameInput.invalid">
+                            <small class="form-text text-danger" *ngIf="firstNameInput.errors.required">
+                                Your first name is required.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-control-label" for="lastName">Last Name</label>
+                        <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Your last name" [(ngModel)]="userDetails.lastName" #lastNameInput="ngModel" required>
+                        <div *ngIf="lastNameInput.dirty && lastNameInput.invalid">
+                            <small class="form-text text-danger" *ngIf="lastNameInput.errors.required">
+                                Your last name is required.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-control-label" for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Your email" [(ngModel)]="userDetails.email" #emailInput="ngModel" email required>
+                        <div *ngIf="emailInput.dirty && emailInput.invalid">
+                            <small class="form-text text-danger" *ngIf="emailInput.errors.required">
+                                Your email is required.
+                            </small>
+                            <small class="form-text text-danger" *ngIf="emailInput.errors.email">
+                                Your email is invalid.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-control-label" for="phoneNumber">Phone number</label>
+                        <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Your phone number" [(ngModel)]="userDetails.phoneNumber" minlength=6 pattern="^[0-9]*$" #phoneNumberInput="ngModel" required>
+                        <div *ngIf="phoneNumberInput.dirty && phoneNumberInput.invalid">
+                            <small class="form-text text-danger" *ngIf="phoneNumberInput.errors.required">
+                                Your phone number is required.
+                            </small>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="form-row align-items-center tickets-input">
+                    <div class="col-auto">
+                        <label for="inputSeats" class="form-control-label">Number of tickets:</label><br>
+                        <button type="button" class="btn btn-outline-danger btn-sm inline" (click)="decreaseTicketsNumber()"><fa-icon icon="minus" fixedWidth="true"></fa-icon></button>
+                        <input class="form-control inline col-4 col-md-2 col-lg-2" type="number" id="inputSeats" name="inputSeats" readonly [(ngModel)]="ticketsNumber">
+                        <button type="button" class="btn btn-outline-success btn-sm inline" (click)="increaseTicketsNumber()"><fa-icon icon="plus" fixedWidth="true"></fa-icon></button>
+                    </div>
+                    <div class="col-auto">
+                        <label for="totalPrice" class="col-form-label">Total price:</label>
+                        <input class="form-control col-8 col-md-4 col-lg-4" type="number" id="totalPrice" name="totalPrice" readonly [(ngModel)]="totalPrice">
+                    </div>
+                </div>
+
+                <button type="submit" [disabled]="settingsForm.form.invalid" class="btn btn-primary submit-btn">Book</button>
+            </form>
+        </div>
+    </div>
+</div>

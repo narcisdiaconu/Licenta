@@ -23,6 +23,7 @@ import { JhiMainComponent, NavbarComponent, FooterComponent, PageRibbonComponent
 import { BusesPageModule } from './buses-page';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { JhiMaterialModule } from './app.angularmat.module';
+import { BookingPageModule } from './booking-page';
 
 @NgModule({
     imports: [
@@ -36,6 +37,7 @@ import { JhiMaterialModule } from './app.angularmat.module';
         BrowserAnimationsModule,
         JhiMaterialModule,
         BusesPageModule,
+        BookingPageModule,
         GatewaySharedModule.forRoot(),
         GatewayCoreModule,
         GatewayHomeModule,
@@ -45,7 +47,7 @@ import { JhiMaterialModule } from './app.angularmat.module';
         GatewayAppRoutingModule,
         NgbPopoverModule
     ],
-    declarations: [JhiMainComponent, NavbarComponent, ErrorComponent, PageRibbonComponent, FooterComponent, MapComponent],
+    declarations: [JhiMainComponent, NavbarComponent, ErrorComponent, PageRibbonComponent, FooterComponent],
     providers: [
         {
             provide: HTTP_INTERCEPTORS,

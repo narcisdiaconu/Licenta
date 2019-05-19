@@ -2,7 +2,7 @@
     "generator-jhipster": {
         "promptValues": {
             "packageName": "com.gateway",
-            "microservicePath": "../Microservices/buses-app"
+            "microservicePath": "../Microservices/tickets-app"
         },
         "jhipsterVersion": "5.8.2",
         "applicationType": "gateway",
