@@ -16,7 +16,9 @@
             </ul>
         </div>
         <div class="col-md-5 col-lg-5 col-sm-7">
-            <div class="selected-bus" *ngIf="selectedBus !== undefined">
+            <a (click)="enableMap()" [hidden]="showMapView">Show map view</a>
+            <a (click)="showMapView = !showMapView" [hidden]="!showMapView">Show text view</a>
+            <div class="selected-bus" *ngIf="selectedBus !== undefined" [hidden]="showMapView">
                 <div>
                     <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
                     <div class="location start"><span>{{selectedBus.start.name}}, {{startLocation}} <span class="time">{{selectedBus.bus.departureTime}}</span></span>
@@ -54,11 +56,11 @@
                 </div>
             </div>
 
-            <div class="all-data">
+            <div class="all-data" [hidden]="showMapView">
 
             </div>
             <!-- {{selectedBus | json}} -->
-            <div class="mapbox" id="mapbox"></div>
+            <div class="mapbox" id="mapbox" [hidden]="!showMapView"></div>
         </div>
     </div>
 </div>

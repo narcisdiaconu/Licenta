@@ -30,7 +30,7 @@ export class MapService {
     private covertCoordinatesToString(coordinates: Coordinate[]): String {
         let result = '';
         coordinates.forEach(coord => {
-            result += coord.latitude + ',' + coord.longitude + ';';
+            result += coord.longitude + ',' + coord.latitude + ';';
         });
         return result.substring(0, result.length - 1);
     }

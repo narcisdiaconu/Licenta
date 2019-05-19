@@ -18,7 +18,7 @@ import { BusStopService } from 'app/entities/buses/bus-stop';
 import { IBusStop } from 'app/shared/model/buses/bus-stop.model';
 import { ICity } from 'app/shared/model/stations/city.model';
 import { CityService } from 'app/entities/stations/city';
-import { Coordinate, Profiles } from 'app/shared/map/map.geojson';
+import { Coordinate, Profiles, GeoJson } from 'app/shared/map/map.geojson';
 import { IDirection } from 'app/shared/map/map.directions';
 
 @Component({
@@ -26,7 +26,7 @@ import { IDirection } from 'app/shared/map/map.directions';
     templateUrl: './buses-page.component.html',
     styleUrls: ['./buses-page.component.css']
 })
-export class BusesPageComponent implements OnInit, OnDestroy {
+export class BusesPageComponent implements OnInit {
     data: any;
     routes: IRoute[];
     stations: IStation[];
@@ -38,6 +38,8 @@ export class BusesPageComponent implements OnInit, OnDestroy {
     timeout: any;
     selectedBus: BusModel;
     showBusStops: boolean;
+    showMapView: boolean;
+    lastBusId: string;
 
     constructor(
         private dataService: DataService,
@@ -51,6 +53,10 @@ export class BusesPageComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
+        this.map = undefined;
+        this.lastBusId = undefined;
+        this.showMapView = false;
+        this.showBusStops = false;
         this.buses = [];
         this.dataService.getMockedData().subscribe(data => {
             if (data.route === undefined) {
@@ -61,11 +67,6 @@ export class BusesPageComponent implements OnInit, OnDestroy {
             this.endLocation = this.data.route.to.name;
             this.loadData();
         });
-        // this.timeout = setTimeout(this.initializeMap, 2000);
-    }
-
-    ngOnDestroy(): void {
-        // clearTimeout(this.timeout);
     }
 
     private initializeMap() {
@@ -74,6 +75,10 @@ export class BusesPageComponent implements OnInit, OnDestroy {
             style: 'mapbox://styles/mapbox/outdoors-v9',
             zoom: 13,
             center: [27.5855732, 47.1678665]
+        });
+
+        this.map.on('load', () => {
+            this.getDirections(this.selectedBus);
         });
     }
 
@@ -180,32 +185,48 @@ export class BusesPageComponent implements OnInit, OnDestroy {
         const oldElement = document.getElementById(this.selectedBus.bus.id.toString());
         oldElement.removeAttribute('class');
         oldElement.className = 'list-group-item';
+        this.lastBusId = this.selectedBus.bus.id.toString();
 
         this.selectedBus = bus;
         const element = document.getElementById(bus.bus.id.toString());
         element.className = 'list-group-item selected';
 
         this.loadIntermediateStops(bus);
-        // this.getDirections(bus);
+        this.drawDirectionOnMap(bus);
     }
 
     private getDirections(bus: BusModel) {
-        if (bus.bus.busStops === undefined) {
-            return;
-        }
-
         const coordinates: Coordinate[] = [];
         coordinates.push(new Coordinate(bus.start.latitude, bus.start.longitude));
-        bus.bus.busStops.forEach(stop => {
-            const station = this.getStationById(stop.station);
-            coordinates.push(new Coordinate(station.latitude, station.longitude));
-        });
+        if (bus.bus.busStops !== undefined) {
+            bus.bus.busStops.forEach(stop => {
+                const station = this.getStationById(stop.station);
+                coordinates.push(new Coordinate(station.latitude, station.longitude));
+            });
+        }
         coordinates.push(new Coordinate(bus.end.latitude, bus.end.longitude));
 
         this.mapService.retrieveDirections(Profiles.Driving, coordinates).subscribe((res: HttpResponse<any>) => {
-            const result: IDirection = res.body;
-            console.log(result);
+            bus.directions = res.body;
+            this.updateBusInList(bus);
+            this.drawDirectionOnMap(bus);
         });
+    }
+
+    private updateBusInList(bus: BusModel) {
+        const index = this.buses.findIndex((b: BusModel) => {
+            if (b.bus.id === bus.bus.id) {
+                return true;
+            }
+            return false;
+        });
+        if (index === -1) {
+            return;
+        }
+        this.buses[index] = bus;
+        if (this.selectedBus.bus.id === bus.bus.id) {
+            this.selectedBus = bus;
+        }
     }
 
     private loadIntermediateStops(bus: BusModel): void {
@@ -215,14 +236,8 @@ export class BusesPageComponent implements OnInit, OnDestroy {
 
         this.busStopService.getByBus(bus.bus.id).subscribe((res: HttpResponse<IBusStop[]>) => {
             bus.bus.busStops = res.body;
-            const index = this.buses.findIndex((b: BusModel) => {
-                if (b.bus.id === bus.bus.id) {
-                    return true;
-                }
-                return false;
-            });
-            this.buses[index] = bus;
-            // this.getDirections(bus);
+            this.updateBusInList(bus);
+            this.getDirections(bus);
         });
     }
 
@@ -243,6 +258,66 @@ export class BusesPageComponent implements OnInit, OnDestroy {
                 return true;
             }
             return false;
+        });
+    }
+
+    enableMap() {
+        this.showMapView = !this.showMapView;
+
+        if (this.map === undefined) {
+            this.initializeMap();
+        } else {
+            if (this.selectedBus.directions === undefined) {
+                this.getDirections(this.selectedBus);
+            } else {
+                this.drawDirectionOnMap();
+            }
+        }
+    }
+
+    private drawDirectionOnMap(bus: BusModel) {
+        if (!this.showMapView) {
+            return;
+        }
+        if (this.lastBusId !== undefined) {
+            this.map.setLayoutProperty(this.lastBusId, 'visibility', 'none');
+        }
+
+        if (bus.directions === undefined) {
+            return;
+        }
+        if (this.map.getLayer(this.selectedBus.bus.id.toString())) {
+            this.map.setLayoutProperty(this.selectedBus.bus.id.toString(), 'visibility', 'visible');
+            return;
+        }
+        const geojson = new GeoJson(bus.directions.routes[0].geometry.coordinates, {});
+        this.map.addLayer({
+            id: bus.bus.id.toString(),
+            type: 'line',
+            source: {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    properties: {},
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: geojson.geometry.coordinates
+                    }
+                }
+            },
+            layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            paint: {
+                'line-color': '#8218f4',
+                'line-width': 8
+            }
+        });
+
+        this.map.flyTo({
+            center: geojson.geometry.coordinates[0],
+            zoom: 8
         });
     }
 }
