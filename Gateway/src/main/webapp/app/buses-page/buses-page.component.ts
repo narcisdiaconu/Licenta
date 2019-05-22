@@ -19,6 +19,8 @@ import { IBusStop } from 'app/shared/model/buses/bus-stop.model';
 import { ICity } from 'app/shared/model/stations/city.model';
 import { CityService } from 'app/entities/stations/city';
 import { Coordinate, Profiles, GeoJson } from 'app/shared/map/map.geojson';
+import { TicketService } from 'app/entities/tickets/ticket';
+import { Location } from '@angular/common';
 
 @Component({
     selector: 'jhi-buses-page',
@@ -39,6 +41,10 @@ export class BusesPageComponent implements OnInit {
     showBusStops: boolean;
     showMapView: boolean;
     lastBusId: string;
+    startMarker: mapboxgl.Marker;
+    endMarker: mapboxgl.Marker;
+    cannotGoToBooking = false;
+    initializing = true;
 
     constructor(
         private dataService: DataService,
@@ -48,7 +54,9 @@ export class BusesPageComponent implements OnInit {
         private stationService: StationService,
         private mapService: MapService,
         private busStopService: BusStopService,
-        private cityService: CityService
+        private cityService: CityService,
+        private ticketService: TicketService,
+        private location: Location
     ) {}
 
     ngOnInit() {
@@ -77,6 +85,7 @@ export class BusesPageComponent implements OnInit {
         });
 
         this.map.on('load', () => {
+            this.map.resize();
             this.getDirections(this.selectedBus);
         });
     }
@@ -139,7 +148,8 @@ export class BusesPageComponent implements OnInit {
                 day
             );
             buses.forEach(bus => {
-                this.buses.push(new BusModel(bus, data.route, data.startStation, data.endStation, date, TravelMode.Bus, 10));
+                const busModel = new BusModel(bus, data.route, data.startStation, data.endStation, date, TravelMode.Bus, 0);
+                this.buses.push(busModel);
                 this.buses.sort((bus1, bus2) => {
                     if (bus1.bus.departureTime < bus2.bus.departureTime) {
                         return -1;
@@ -153,10 +163,11 @@ export class BusesPageComponent implements OnInit {
                 this.selectedBus = this.buses[0];
                 this.loadIntermediateStops(this.selectedBus);
             }
+            this.initializing = false;
         });
     }
 
-    private filterByDate(buses: IBus[], day: number) {
+    private filterByDate(buses: IBus[], day: number): IBus[] {
         return buses.filter(bus => {
             return bus.days.charAt(day - 1) === '1';
         });
@@ -257,6 +268,15 @@ export class BusesPageComponent implements OnInit {
             bus.bus.busStops = res.body;
             this.updateBusInList(bus);
             this.getDirections(bus);
+            this.loadOcupiedSeats(bus);
+        });
+    }
+
+    private loadOcupiedSeats(bus: BusModel) {
+        this.ticketService.ocupiedSeats(bus).subscribe((res: HttpResponse<number>) => {
+            bus.remainingSeats = bus.bus.totalPlaces - res.body;
+            console.log(res.body);
+            this.updateBusInList(bus);
         });
     }
 
@@ -280,7 +300,7 @@ export class BusesPageComponent implements OnInit {
         });
     }
 
-    enableMap() {
+    enableMap(): void {
         this.showMapView = !this.showMapView;
 
         if (this.map === undefined) {
@@ -310,6 +330,33 @@ export class BusesPageComponent implements OnInit {
             return;
         }
         const geojson = new GeoJson(bus.directions.routes[0].geometry.coordinates, {});
+
+        // Create markers
+        // let markerDiv = document.createElement('div');
+        // let icon = document.createElement('fa-icon');
+        // icon.setAttribute('icon', 'map-marker');
+        // icon.className = 'start-marker';
+        // markerDiv.appendChild(icon);
+
+        if (this.startMarker !== undefined) {
+            this.startMarker.remove();
+        }
+        this.startMarker = new mapboxgl.Marker().setLngLat(geojson.geometry.coordinates[0]).addTo(this.map);
+
+        // markerDiv = document.createElement('div');
+        // icon = document.createElement('fa-icon');
+        // icon.setAttribute('icon', 'map-marker');
+        // icon.className = 'end-marker';
+        // markerDiv.appendChild(icon);
+
+        if (this.endMarker !== undefined) {
+            this.endMarker.remove();
+        }
+        this.endMarker = new mapboxgl.Marker()
+            .setLngLat(geojson.geometry.coordinates[geojson.geometry.coordinates.length - 1])
+            .addTo(this.map);
+
+        // Display direction on map
         this.map.addLayer({
             id: bus.bus.id.toString(),
             type: 'line',
@@ -330,20 +377,40 @@ export class BusesPageComponent implements OnInit {
             },
             paint: {
                 'line-color': '#8218f4',
-                'line-width': 8
+                'line-width': 5
             }
         });
 
         this.map.flyTo({
             center: geojson.geometry.coordinates[0],
-            zoom: 8
+            zoom: 10
         });
     }
 
-    public toBooking() {
+    toBooking(): void {
+        if (!this.checkIfBusIsAvailable(this.selectedBus)) {
+            this.cannotGoToBooking = true;
+            return;
+        }
+        this.cannotGoToBooking = false;
         this.selectedBus.directions = undefined;
         this.data.buses = [this.selectedBus];
         this.dataService.updateData(this.data);
         this.router.navigate(['/booking-page']);
+    }
+
+    toMain(): void {
+        this.location.back();
+    }
+
+    private checkIfBusIsAvailable(bus: BusModel): boolean {
+        const today = new Date();
+        const date = new Date(bus.date);
+        date.setHours(parseInt(bus.bus.departureTime.split(':')[0], 10));
+        date.setMinutes(parseInt(bus.bus.departureTime.split(':')[1], 10));
+        if (today.getTime() < date.getTime()) {
+            return true;
+        }
+        return false;
     }
 }

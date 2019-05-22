@@ -3,6 +3,7 @@ package com.busticketbooking.tickets.service.impl;
 import com.busticketbooking.tickets.service.TicketService;
 import com.busticketbooking.tickets.domain.Ticket;
 import com.busticketbooking.tickets.repository.TicketRepository;
+import com.busticketbooking.tickets.service.dto.OcupiedSeatsDTO;
 import com.busticketbooking.tickets.service.dto.TicketDTO;
 import com.busticketbooking.tickets.service.mapper.TicketMapper;
 import org.slf4j.Logger;
@@ -13,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -85,5 +88,48 @@ public class TicketServiceImpl implements TicketService {
     public void delete(Long id) {
         log.debug("Request to delete Ticket : {}", id);
         ticketRepository.deleteById(id);
+    }
+
+    @Override
+    public Long getOcupiedSeats(OcupiedSeatsDTO ocupiedSeatsDTO) {
+        int startPosition = ocupiedSeatsDTO.getStops().indexOf(ocupiedSeatsDTO.getStartStation());
+        int endPosition = ocupiedSeatsDTO.getStops().indexOf(ocupiedSeatsDTO.getEndStation());
+
+        Long result = new Long(0);
+        for(int i=0; i < ocupiedSeatsDTO.getStops().size(); i++) {
+            if (i < endPosition) {
+                result += getOcupiedSeatsInLocation(ocupiedSeatsDTO, i);
+            }
+            if (i <= startPosition) {
+                result -= getEliberatedSeats(ocupiedSeatsDTO, i);
+            }
+        }
+        return result;
+    }
+
+    private int getOcupiedSeatsInLocation(OcupiedSeatsDTO ocupiedSeatsDTO, int index) {
+        int result = 0;
+        List<Ticket> tickets = this.ticketRepository.findByBusAndDate(ocupiedSeatsDTO.getBus(), ocupiedSeatsDTO.getDate());
+        Long location = ocupiedSeatsDTO.getStops().get(index);
+        for (Ticket ticket : tickets) {
+            if (ticket.getStartStation().equals(location)) {
+                result += ticket.getPlaces();
+            }
+        }
+
+        return result;
+    }
+
+    private int getEliberatedSeats(OcupiedSeatsDTO ocupiedSeatsDTO, int index) {
+        int result = 0;
+        List<Ticket> tickets = this.ticketRepository.findByBusAndDate(ocupiedSeatsDTO.getBus(), ocupiedSeatsDTO.getDate());
+        Long location = ocupiedSeatsDTO.getStops().get(index);
+        for (Ticket ticket : tickets) {
+            if (ticket.getEndStation().equals(location)) {
+                result += ticket.getPlaces();
+            }
+        }
+
+        return result;
     }
 }

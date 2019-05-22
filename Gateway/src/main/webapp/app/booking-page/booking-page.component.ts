@@ -8,6 +8,7 @@ import { AccountService } from 'app/core';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { IBus } from 'app/shared/model/buses/bus.model';
 import { BusModel } from 'app/models/bus';
+import { TicketService } from 'app/entities/tickets/ticket';
 
 @Component({
     selector: 'jhi-booking',
@@ -21,17 +22,20 @@ export class BookingPageComponent implements OnInit {
     buses: BusModel[];
     ticketsNumber = 0;
     totalPrice = 0;
+    paymentMethods: any[];
 
     constructor(
         private dataService: DataService,
         private router: Router,
         private location: Location,
         private userDetailsService: UserdetailsService,
-        private accountService: AccountService
+        private accountService: AccountService,
+        private ticketService: TicketService
     ) {}
 
     ngOnInit(): void {
-        this.dataService.getMockedData().subscribe(data => {
+        this.paymentMethods = [{ value: '1', label: 'Cash' }, { value: '2', label: 'Card' }];
+        this.dataService.getData().subscribe(data => {
             if (data.buses === undefined) {
                 this.location.back();
             }
@@ -58,7 +62,9 @@ export class BookingPageComponent implements OnInit {
 
     private loadPlacesLeft(): void {
         this.buses.forEach(bus => {
-            bus.remainingSeats = 10;
+            this.ticketService.ocupiedSeats(bus).subscribe((res: HttpResponse<number>) => {
+                bus.remainingSeats = bus.bus.totalPlaces - res.body;
+            });
         });
     }
 

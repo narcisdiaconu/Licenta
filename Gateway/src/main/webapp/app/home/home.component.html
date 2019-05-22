@@ -42,7 +42,7 @@
                         <div class="form-row">
                             <div class="col-md-6">
                                 <label class="form-control-label">Departure hour</label>
-                                <input class="form-control" id="departure_hour" [ngModel]="convertTimeToString(departureHour)" [ngbPopover]="departureHourTemplate" name="departure" [autoClose]="'outside'" required>
+                                <input class="form-control" id="departure_hour" [ngModel]="convertTimeToString(departureHour)" [ngbPopover]="departureHourTemplate" name="departure" [autoClose]="'outside'" pattern="([01]?[0-9]{1}|2[0-3]{1}):[0-5]?[0-9]{1}" required>
                             </div>
                             <!-- <div class="col-md-6">
                         <label class="form-control-label">Arrival hour</label>

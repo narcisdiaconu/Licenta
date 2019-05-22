@@ -1,5 +1,6 @@
 package com.busticketbooking.tickets.service;
 
+import com.busticketbooking.tickets.service.dto.OcupiedSeatsDTO;
 import com.busticketbooking.tickets.service.dto.TicketDTO;
 
 import org.springframework.data.domain.Page;
@@ -43,4 +44,6 @@ public interface TicketService {
      * @param id the id of the entity
      */
     void delete(Long id);
+
+    Long getOcupiedSeats(OcupiedSeatsDTO ocupiedSeatsDTO);
 }

@@ -3,6 +3,7 @@ import com.busticketbooking.tickets.service.TicketService;
 import com.busticketbooking.tickets.web.rest.errors.BadRequestAlertException;
 import com.busticketbooking.tickets.web.rest.util.HeaderUtil;
 import com.busticketbooking.tickets.web.rest.util.PaginationUtil;
+import com.busticketbooking.tickets.service.dto.OcupiedSeatsDTO;
 import com.busticketbooking.tickets.service.dto.TicketDTO;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -116,5 +117,12 @@ public class TicketResource {
         log.debug("REST request to delete Ticket : {}", id);
         ticketService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+    @PostMapping("/tickets/ocupied-seats")
+    public ResponseEntity<Long> getOcupiedSeats(@Valid @RequestBody OcupiedSeatsDTO ocupiedSeatsDTO) {
+        log.debug("REST request to get ocupied seats for bus : {}", ocupiedSeatsDTO.getBus());
+        Long result = ticketService.getOcupiedSeats(ocupiedSeatsDTO);
+        return ResponseEntity.ok(result);
     }
 }

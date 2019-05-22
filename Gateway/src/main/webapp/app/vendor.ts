@@ -46,7 +46,8 @@ import {
     faDotCircle,
     faWallet,
     faCircle,
-    faMinus
+    faMinus,
+    faMapMarker
 } from '@fortawesome/free-solid-svg-icons';
 
 // Adds the SVG icon to the library so you can use it in your page
@@ -92,5 +93,6 @@ library.add(faWallet);
 library.add(faCircle);
 library.add(faPlus);
 library.add(faMinus);
+library.add(faMapMarker);
 
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

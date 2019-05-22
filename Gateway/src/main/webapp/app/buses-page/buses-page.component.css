@@ -85,6 +85,11 @@
     font-size: 18px;
 }
 
+.selected-bus {
+    padding-bottom: 20px;
+    border-bottom: 2px #5f5f5f solid;
+}
+
 .selected-bus p {
     margin: 0;
 }
@@ -98,7 +103,7 @@
 
 .all-data {
     margin-top: 20px;
-    border-top: 2px #5f5f5f solid;
+    /* border-top: 2px #5f5f5f solid; */
 }
 
 /* Map */
@@ -106,6 +111,27 @@
 .mapbox {
     height: 100%;
     width: 100%;
-    max-height: 400px;
-    max-width: 400px;
+    height: 550px;
+    width: 800px;
+}
+
+.start-marker {
+    color: #3c8a08;
+}
+
+.end-marker {
+    color: #aa0000;
+}
+
+@media screen and (max-width: 900px) {
+    .mapbox {
+        width: auto;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .mapbox {
+        height: auto;
+        min-height: 300px;
+    }
 }

@@ -10,6 +10,8 @@ import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { DataService } from 'app/data.service';
 import { Observable } from 'rxjs';
+import { IStation } from 'app/shared/model/stations/station.model';
+import { StationService } from 'app/entities/stations/station';
 
 @Component({
     selector: 'jhi-home',
@@ -20,6 +22,7 @@ export class HomeComponent implements OnInit {
     account: Account;
     modalRef: NgbModalRef;
     cities: ICity[];
+    stations: IStation[];
     startCity: number;
     endCity: number;
     dateModel: NgbDateStruct;
@@ -47,7 +50,8 @@ export class HomeComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private router: Router,
         private dpConfig: NgbDatepickerConfig,
-        private dataService: DataService
+        private dataService: DataService,
+        private stationService: StationService
     ) {
         const today = new Date();
         this.dpConfig.minDate = { year: today.getFullYear(), month: today.getMonth() + 1, day: today.getDate() };
@@ -60,9 +64,25 @@ export class HomeComponent implements OnInit {
         this.accountService.identity().then((account: Account) => {
             this.account = account;
             this.getCities();
+            this.getStations();
         });
         this.registerAuthenticationSuccess();
         this.dataService.getData().subscribe(data => (this.data = data));
+    }
+
+    private getStations() {
+        this.stationService
+            .query()
+            .pipe(map((response: HttpResponse<IStation[]>) => response.body))
+            .subscribe((res: IStation[]) => {
+                this.stations = res;
+            });
+    }
+
+    getCityForStation(station: IStation) {
+        return this.cities.find(city => {
+            return city.id === station.cityId;
+        });
     }
 
     private getCities() {
@@ -101,13 +121,13 @@ export class HomeComponent implements OnInit {
             from: this.startCity,
             to: this.endCity,
             date: this.dateModel,
-            hour: this.convertWithDoubleDigits(this.departureHour)
+            hour: this.convertToDoubleDigits(this.departureHour)
         };
         this.dataService.updateData(this.data);
         this.router.navigate(['/buses-page']);
     }
 
-    convertWithDoubleDigits(time: NgbTimeStruct) {
+    convertToDoubleDigits(time: NgbTimeStruct) {
         let result = '';
         if (time.hour < 10) {
             result += '0' + time.hour;

@@ -40,3 +40,8 @@
 .inline {
     display: inline-block;
 }
+
+.remove-padding {
+    padding: 2px;
+    padding-left: 5px;
+}

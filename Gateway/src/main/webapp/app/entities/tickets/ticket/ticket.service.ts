@@ -8,6 +8,8 @@ import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
 import { ITicket } from 'app/shared/model/tickets/ticket.model';
+import { IOcupiedSeats, OcupiedSeats } from 'app/shared/model/tickets/ocupied-seats.model';
+import { BusModel } from 'app/models/bus';
 
 type EntityResponseType = HttpResponse<ITicket>;
 type EntityArrayResponseType = HttpResponse<ITicket[]>;
@@ -47,6 +49,27 @@ export class TicketService {
 
     delete(id: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    }
+
+    ocupiedSeats(req: BusModel): Observable<HttpResponse<number>> {
+        const convertedData = this.convertBusToOcupiedSeat(req);
+        let convert: ITicket = { date: convertedData.date };
+        convert = this.convertDateFromClient(convert);
+        convertedData.date = convert.date;
+
+        return this.http.post<number>(`${this.resourceUrl}/ocupied-seats`, convertedData, { observe: 'response' });
+    }
+
+    private convertBusToOcupiedSeat(bus: BusModel): IOcupiedSeats {
+        const stops = [];
+        stops.push(bus.route.startStation);
+        bus.bus.busStops.forEach(stop => {
+            stops.push(stop.station);
+        });
+        stops.push(bus.route.endStation);
+
+        const data: IOcupiedSeats = new OcupiedSeats(bus.bus.id, stops, moment(bus.date), bus.start.id, bus.end.id);
+        return data;
     }
 
     protected convertDateFromClient(ticket: ITicket): ITicket {

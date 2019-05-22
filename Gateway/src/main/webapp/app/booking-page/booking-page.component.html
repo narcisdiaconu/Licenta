@@ -89,16 +89,29 @@
                 </div>
 
                 <div class="form-row align-items-center tickets-input">
+
                     <div class="col-auto">
                         <label for="inputSeats" class="form-control-label">Number of tickets:</label><br>
                         <button type="button" class="btn btn-outline-danger btn-sm inline" (click)="decreaseTicketsNumber()"><fa-icon icon="minus" fixedWidth="true"></fa-icon></button>
-                        <input class="form-control inline col-4 col-md-2 col-lg-2" type="number" id="inputSeats" name="inputSeats" readonly [(ngModel)]="ticketsNumber">
+                        <input class="form-control inline col-4 col-md-2 col-lg-2 remove-padding" type="number" id="inputSeats" name="inputSeats" readonly [(ngModel)]="ticketsNumber">
                         <button type="button" class="btn btn-outline-success btn-sm inline" (click)="increaseTicketsNumber()"><fa-icon icon="plus" fixedWidth="true"></fa-icon></button>
                     </div>
+
                     <div class="col-auto">
                         <label for="totalPrice" class="col-form-label">Total price:</label>
                         <input class="form-control col-8 col-md-4 col-lg-4" type="number" id="totalPrice" name="totalPrice" readonly [(ngModel)]="totalPrice">
                     </div>
+
+                    <!-- <div class="col-auto">
+                        <label for="paymentMethod" class="col-form-label">Payment method:</label>
+                        <mat-select>
+                            <mat-option *ngFor="let payment of paymentMethods" [value]="payment.value">
+                                {{payment.label}}
+                            </mat-option>
+                        </mat-select>
+                        <input class="form-control col-8 col-md-4 col-lg-4" type="number" id="paymentMethod" name="paymentMethod" readonly [(ngModel)]="totalPrice">
+                    </div> -->
+
                 </div>
 
                 <button type="submit" [disabled]="settingsForm.form.invalid" class="btn btn-primary submit-btn">Book</button>

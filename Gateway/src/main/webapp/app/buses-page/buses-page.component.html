@@ -2,9 +2,11 @@
     <div class="title">
         <h4 class="font-weight-bold">Buses from {{startLocation}} to {{endLocation}}</h4>
     </div>
-    <div class="row">
-        <div class="col-md-3 col-lg-3 col-sm-2">
-            <ul class="list-group col-md-8 col-lg-8 col-sm-12">
+
+    <div class="container row" *ngIf="buses.length > 0">
+
+        <div class="col-md-3 col-lg-3 col-sm-12">
+            <ul class="list-group col-12 col-lg-8">
                 <li class="list-group-item" *ngFor="let bus of buses; let isFirst = first" (click)="changeSelected(bus)" [attr.id]=bus.bus.id [class.selected]="isFirst">
                     <p class="route-title">{{bus.route.title}}</p>
                     <p class="route-day">{{bus.date.toDateString()}}</p>
@@ -15,54 +17,74 @@
                 </li>
             </ul>
         </div>
-        <div class="col-md-5 col-lg-5 col-sm-7">
+
+        <div class="col-md-9 col-lg-9 col-sm-12">
             <a (click)="enableMap()" [hidden]="showMapView">Show map view</a>
             <a (click)="showMapView = !showMapView" [hidden]="!showMapView">Show text view</a>
-            <div class="selected-bus" *ngIf="selectedBus !== undefined" [hidden]="showMapView">
-                <div>
-                    <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
-                    <div class="location start"><span>{{selectedBus.start.name}}, {{startLocation}} <span class="time">{{selectedBus.bus.departureTime}}</span></span>
+
+            <div class="col-md-8 col-lg-8 col-sm-10" [hidden]="showMapView">
+                <div class="selected-bus" *ngIf="selectedBus !== undefined">
+                    <div>
+                        <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
+                        <div class="location start"><span>{{selectedBus.start.name}}, {{startLocation}} <span class="time">{{selectedBus.bus.departureTime}}</span></span>
+                        </div>
                     </div>
-                </div>
-                <div class="details">
-                    <div class="travel-mode" [ngSwitch]="selectedBus.type">
-                        <div class="travel-mode-icon">
-                            <mat-icon *ngSwitchCase="'Bus'" [inline]="true">directions_bus</mat-icon>
-                            <fa-icon icon="walking" *ngSwitchCase="'Walk'"></fa-icon>
+                    <div class="details">
+                        <div class="travel-mode" [ngSwitch]="selectedBus.type">
+                            <div class="travel-mode-icon">
+                                <mat-icon *ngSwitchCase="'Bus'" [inline]="true">directions_bus</mat-icon>
+                                <fa-icon icon="walking" *ngSwitchCase="'Walk'"></fa-icon>
+                            </div>
+                            <div class="travel-mode-details">
+                                <p class="travel-mode-name">{{selectedBus.type}}</p>
+                            </div>
                         </div>
-                        <div class="travel-mode-details">
-                            <p class="travel-mode-name">{{selectedBus.type}}</p>
+                        <div>
+                            <p class="price">Price: <b>{{selectedBus.bus.price}} LEI</b></p>
+                            <span>Empty seats: <b>{{selectedBus.remainingSeats}}/{{selectedBus.bus.totalPlaces}}</b></span>
                         </div>
+
+                        <a (click)="showBusStops = !showBusStops" [hidden]="showBusStops" *ngIf="getStopsForCurrentBus()
+                    !== undefined">Show intermediate stops</a>
+                        <a (click)="showBusStops = !showBusStops" [hidden]="!showBusStops" *ngIf="getStopsForCurrentBus() !== undefined">Hide intermediate stops</a>
+                        <div class="bus-stops" [hidden]="!showBusStops">
+                            <!-- <div *ngFor="let stop of selectedBus.bus.busStops"> -->
+                            <div *ngFor="let stop of getStopsForCurrentBus()">
+                                <fa-icon icon="circle" class="fa-sm color-purple bus-stop-icon"></fa-icon>
+                                <span class="location">{{getStationById(stop.station).name}}, {{getCityByStation(stop.station).name}} <span class="time">{{stop.arrivalTime}}</span></span>
+                            </div>
+                        </div>
+
                     </div>
                     <div>
-                        <p class="price">Price: <b>{{selectedBus.bus.price}} LEI</b></p>
-                        <span>Empty seats: <b>{{selectedBus.remainingSeats}}/{{selectedBus.bus.totalPlaces}}</b></span>
-                    </div>
-
-                    <a (click)="showBusStops = !showBusStops" [hidden]="showBusStops" *ngIf="getStopsForCurrentBus()
-                    !== undefined">Show intermediate stops</a>
-                    <a (click)="showBusStops = !showBusStops" [hidden]="!showBusStops" *ngIf="getStopsForCurrentBus() !== undefined">Hide intermediate stops</a>
-                    <div class="bus-stops" [hidden]="!showBusStops">
-                        <!-- <div *ngFor="let stop of selectedBus.bus.busStops"> -->
-                        <div *ngFor="let stop of getStopsForCurrentBus()">
-                            <fa-icon icon="circle" class="fa-sm color-purple bus-stop-icon"></fa-icon>
-                            <span class="location">{{getStationById(stop.station).name}}, {{getCityByStation(stop.station).name}} <span class="time">{{stop.arrivalTime}}</span></span>
+                        <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
+                        <div class="location end"><span>{{selectedBus.end.name}}, {{endLocation}} <span class="time">{{selectedBus.bus.arrivalTime}}</span></span>
                         </div>
                     </div>
-
-                </div>
-                <div>
-                    <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
-                    <div class="location end"><span>{{selectedBus.end.name}}, {{endLocation}} <span class="time">{{selectedBus.bus.arrivalTime}}</span></span>
-                    </div>
                 </div>
             </div>
 
-            <div class="all-data">
-                <button type="submit" id="booking-button" class="btn btn-primary" (click)="toBooking()">Book now</button>
-            </div>
-            <!-- {{selectedBus | json}} -->
             <div class="mapbox" id="mapbox" [hidden]="!showMapView"></div>
+
+            <div>
+                <div class="all-data">
+                    <button type="submit" id="booking-button" class="btn btn-primary" (click)="toBooking()">Book now</button>
+                </div>
+                <div *ngIf="cannotGoToBooking">
+                    <small class="form-text text-danger">
+                        You can not make a booking at the selected bus! <br>The bus has already left!
+                    </small>
+                </div>
+            </div>
+
+        </div>
+        <div class="clearfix"></div>
+    </div>
+
+    <div *ngIf="buses.length === 0 && !initializing" class="row justify-content-center">
+        <div class="col-11 col-md-9">
+            <h3>No buses found.</h3>
+            <button type="submit" id="back-button" class="btn btn-primary" (click)="toMain()">Return to main</button>
         </div>
     </div>
 </div>
