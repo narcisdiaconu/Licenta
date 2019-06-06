@@ -10,33 +10,33 @@
                         <tr>
                             <th scope="row">From</th>
                             <td>
-                                <span><b>{{data.route.from.name}}</b></span><br>
-                                <span>{{bus.start.name}}</span>
+                                <span><b>{{bus.start_location.city.name}}</b></span><br>
+                                <span>{{bus.start_location.name}}</span>
                             </td>
                             <td>
-                                {{bus.bus.departureTime}}
+                                {{bus.departure_time.text}}
                             </td>
                             <td>
-                                {{convertDateToString(bus.date)}}
+                                {{convertDateToString(bus.departure_time.value)}}
                             </td>
                         </tr>
                         <tr>
                             <th scope="row">To</th>
                             <td>
-                                <span><b>{{data.route.to.name}}</b></span><br>
-                                <span>{{bus.end.name}}</span>
+                                <span><b>{{bus.end_location.city.name}}</b></span><br>
+                                <span>{{bus.end_location.name}}</span>
                             </td>
                             <td>
-                                {{bus.bus.arrivalTime}}
+                                {{bus.arrival_time.text}}
                             </td>
                             <td>
-                                <span>{{convertDateToString(bus.date)}}</span>
+                                <span>{{convertDateToString(bus.arrival_time.value)}}</span>
                             </td>
                         </tr>
                     </tbody>
                 </table>
-                <span class="h6">Price per ticket: <b>{{getFinalPrice(bus.bus)}}</b></span><br>
-                <span class="h6">Remaining seats: <b>{{bus.remainingSeats}}</b></span>
+                <span class="h6">Price per ticket: <b>{{getFinalPrice(bus)}}</b></span><br>
+                <span class="h6">Remaining seats: <b>{{bus.remaining_seats}}</b></span>
             </div>
         </div>
 

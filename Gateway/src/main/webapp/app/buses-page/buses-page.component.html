@@ -1,65 +1,168 @@
 <div>
     <div class="title">
-        <h4 class="font-weight-bold">Buses from {{startLocation}} to {{endLocation}}</h4>
+        <h4 class="font-weight-bold">Transport from {{data.route.from.city.name}} to {{data.route.to.city.name}}</h4>
     </div>
 
-    <div class="container row" *ngIf="buses.length > 0">
+    <div class="container row" *ngIf="optimalRoutes.length > 0">
 
-        <div class="col-md-3 col-lg-3 col-sm-12">
-            <ul class="list-group col-12 col-lg-8">
-                <li class="list-group-item" *ngFor="let bus of buses; let isFirst = first" (click)="changeSelected(bus)" [attr.id]=bus.bus.id [class.selected]="isFirst">
-                    <p class="route-title">{{bus.route.title}}</p>
-                    <p class="route-day">{{bus.date.toDateString()}}</p>
-                    <p class="route-times">{{bus.bus.departureTime}}
-                        <fa-icon icon="arrow-right" fixedWidth="true"></fa-icon>{{bus.bus.arrivalTime}}</p>
-                    <p>
-                        <fa-icon icon="clock" class="clock-icon"></fa-icon> {{getTotalTime(bus.bus)}}</p>
+        <div class="col-md-4 col-lg-4 col-sm-12">
+            <ul class="list-group col-12 col-lg-12">
+                <li class="list-group-item" *ngFor="let route of optimalRoutes; let isFirst = first" (click)="changeSelected(route)" [attr.id]=route.summary.id [class.selected]="isFirst">
+                    <p class="route-title">{{route.summary.start_location.name}} - {{route.summary.end_location.name}}</p>
+                    <p class="route-day">{{getDate(route.summary.departure_time.value).toDateString()}}</p>
+                    <p class="route-times">{{route.summary.departure_time.text}}
+                        <fa-icon icon="arrow-right" fixedWidth="true"></fa-icon>{{route.summary.arrival_time.text}}</p>
+                    <p class="travel_time">
+                        <fa-icon icon="clock" class="clock-icon"></fa-icon> {{route.summary.travel_time.text}}</p>
+                    <p class="wait_time">
+                        <mat-icon [inline]="true">timer_off</mat-icon> {{route.summary.wait_time.text}}</p>
+                    <p class="transfers">
+                        <mat-icon [inline]="true">timeline</mat-icon> {{route.summary.transfers}}</p>
                 </li>
             </ul>
         </div>
 
-        <div class="col-md-9 col-lg-9 col-sm-12">
+        <div class="col-md-8 col-lg-8 col-sm-12">
+            <h4><span class="summary-title">Details</span></h4>
             <a (click)="enableMap()" [hidden]="showMapView">Show map view</a>
             <a (click)="showMapView = !showMapView" [hidden]="!showMapView">Show text view</a>
 
-            <div class="col-md-8 col-lg-8 col-sm-10" [hidden]="showMapView">
-                <div class="selected-bus" *ngIf="selectedBus !== undefined">
-                    <div>
-                        <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
-                        <div class="location start"><span>{{selectedBus.start.name}}, {{startLocation}} <span class="time">{{selectedBus.bus.departureTime}}</span></span>
-                        </div>
-                    </div>
-                    <div class="details">
-                        <div class="travel-mode" [ngSwitch]="selectedBus.type">
-                            <div class="travel-mode-icon">
-                                <mat-icon *ngSwitchCase="'Bus'" [inline]="true">directions_bus</mat-icon>
-                                <fa-icon icon="walking" *ngSwitchCase="'Walk'"></fa-icon>
+            <div class="col-md-10 col-lg-10 col-sm-12" [hidden]="showMapView">
+                <div class="selected-bus" *ngIf="selectedRoute !== undefined">
+                    <div *ngFor="let route of selectedRoute.route" [ngSwitch]="route.type">
+                        <div *ngSwitchCase="'INTERNAL'">
+                            <div>
+                                <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
+                                <div class="location start"><span>{{route.start_location.name}}, {{route.start_location.city.name}} <span class="time">{{route.departure_time.text}}</span></span>
+                                </div>
                             </div>
-                            <div class="travel-mode-details">
-                                <p class="travel-mode-name">{{selectedBus.type}}</p>
+
+                            <div class="bus-details">
+                                <div class="travel-mode">
+                                    <div>
+                                        <mat-icon [inline]="true" class="travel-mode-icon">directions_bus</mat-icon>
+                                    </div>
+                                    <div class="travel-mode-details">
+                                        <p class="travel-mode-name">Bus</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <p class="price" *ngIf="route.price">Price: <b>{{route.price}} LEI</b></p>
+                                    <span>Empty seats: <b>{{route.total_places - loadOccupiedSeats(route.bus_id)}}/{{route.total_places}}</b></span>
+                                </div>
+
+                                <a (click)="showBusStops = !showBusStops" [hidden]="showBusStops || route.steps.length == 0">Show intermediate stops</a>
+                                <a (click)="showBusStops = !showBusStops" [hidden]="!showBusStops || route.steps.length == 0">Hide intermediate stops</a>
+                                <div class="bus-stops" [hidden]="!showBusStops">
+                                    <div *ngFor="let step of route.steps">
+                                        <div *ngIf="step.end_location.id != route.end_location.id">
+                                            <fa-icon icon="circle" class="fa-sm color-purple bus-stop-icon"></fa-icon>
+                                            <span class="location">{{step.end_location.name}}, {{step.end_location.city.name}} <span class="time">{{step.arrival_time.text}}</span></span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <p class="price">Price: <b>{{selectedBus.bus.price}} LEI</b></p>
-                            <span>Empty seats: <b>{{selectedBus.remainingSeats}}/{{selectedBus.bus.totalPlaces}}</b></span>
+
+                            <div>
+                                <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
+                                <div class="location end"><span>{{route.end_location.name}}, {{route.end_location.city.name}} <span class="time">{{route.arrival_time.text}}</span></span>
+                                </div>
+                            </div>
+
                         </div>
 
-                        <a (click)="showBusStops = !showBusStops" [hidden]="showBusStops" *ngIf="getStopsForCurrentBus()
-                    !== undefined">Show intermediate stops</a>
-                        <a (click)="showBusStops = !showBusStops" [hidden]="!showBusStops" *ngIf="getStopsForCurrentBus() !== undefined">Hide intermediate stops</a>
-                        <div class="bus-stops" [hidden]="!showBusStops">
-                            <!-- <div *ngFor="let stop of selectedBus.bus.busStops"> -->
-                            <div *ngFor="let stop of getStopsForCurrentBus()">
-                                <fa-icon icon="circle" class="fa-sm color-purple bus-stop-icon"></fa-icon>
-                                <span class="location">{{getStationById(stop.station).name}}, {{getCityByStation(stop.station).name}} <span class="time">{{stop.arrivalTime}}</span></span>
+                        <div *ngSwitchCase="'EXTERNAL'">
+                            <div *ngIf="isFirstWalking(route)">
+                                <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
+                                <div class="location start"><span>{{route.start_location.name}} <span class="time">{{route.departure_time.text}}</span></span>
+                                </div>
+                            </div>
+
+                            <div *ngFor="let step of route.steps" [ngSwitch]="step.travel_mode">
+                                <div *ngSwitchCase="'WALKING'" class="walk-details">
+                                    <p [innerHTML]="step.html_instructions"></p>
+
+                                    <div class="travel-mode">
+                                        <div>
+                                            <fa-icon icon="walking" class="fa-2x"></fa-icon>
+                                        </div>
+                                        <div>
+                                            <p>{{step.distance.text}}</p>
+                                            <p>{{step.duration.text}}</p>
+                                        </div>
+                                    </div>
+                                    <p>Walk informations:</p>
+                                    <p *ngFor="let walk of step.steps" [innerHTML]="walk.html_instructions"></p>
+                                    <p class="add-padding"></p>
+                                </div>
+
+                                <div *ngSwitchCase="'TRANSIT'">
+                                    <div>
+                                        <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
+                                        <div class="location start"><span>{{step.transit_details.departure_stop.name}} <span class="time">{{step.transit_details.departure_time.text}}</span></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="bus-details">
+                                        <span [innerHTML]="step.html_instructions"></span>
+                                        <span> - {{step.transit_details.line.agencies[0].name}}</span><br>
+                                        <a [href]="step.transit_details.line.agencies[0].url">{{step.transit_details.line.agencies[0].url}}</a>
+                                        <div class="travel-mode">
+                                            <div><img [src]="step.transit_details.line.vehicle.icon"></div>
+                                            <div>
+                                                <p>{{step.distance.text}}</p>
+                                                <p>{{step.duration.text}}</p>
+                                            </div>
+                                        </div>
+                                        <p>For more details: {{step.transit_details.line.agencies[0].phone}}</p>
+                                    </div>
+
+                                    <div>
+                                        <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
+                                        <div class="location end"><span>{{step.transit_details.arrival_stop.name}} <span class="time">{{step.transit_details.arrival_time.text}}</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div *ngIf="isLastWalking(route)">
+                                <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
+                                <div class="location start"><span>{{route.end_location.name}} <span class="time">{{route.arrival_time.text}}</span></span>
+                                </div>
                             </div>
                         </div>
 
-                    </div>
-                    <div>
-                        <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
-                        <div class="location end"><span>{{selectedBus.end.name}}, {{endLocation}} <span class="time">{{selectedBus.bus.arrivalTime}}</span></span>
-                        </div>
+                        <!-- <div class="details">
+                            <div class="travel-mode">
+                                <div class="travel-mode-icon">
+                                    <mat-icon [inline]="true">directions_bus</mat-icon>
+                                    <fa-icon icon="walking"></fa-icon>
+                                </div>
+                                <div class="travel-mode-details">
+                                    <p class="travel-mode-name">{{route}}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="price">Price: <b>{{selectedBus.bus.price}} LEI</b></p>
+                                <span>Empty seats: <b>{{selectedBus.remainingSeats}}/{{selectedBus.bus.totalPlaces}}</b></span>
+                            </div>
+
+                            <a (click)="showBusStops = !showBusStops" [hidden]="showBusStops">Show intermediate stops</a>
+                            <a (click)="showBusStops = !showBusStops" [hidden]="!showBusStops">Hide intermediate stops</a>
+                            <div class="bus-stops" [hidden]="!showBusStops">
+                                <div *ngFor="let stop of getStopsForCurrentBus()">
+                                    <fa-icon icon="circle" class="fa-sm color-purple bus-stop-icon"></fa-icon>
+                                    <span class="location">{{getStationById(stop.station).name}}, {{getCityByStation(stop.station).name}} <span class="time">{{stop.arrivalTime}}</span></span>
+                                </div>
+                            </div>
+
+                        </div> -->
+                        <!-- <div>
+                            <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
+                            <div class="location end"><span>{{selectedBus.end.name}}, {{endLocation}} <span class="time">{{selectedBus.bus.arrivalTime}}</span></span>
+                            </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
@@ -68,11 +171,23 @@
 
             <div>
                 <div class="all-data">
-                    <button type="submit" id="booking-button" class="btn btn-primary" (click)="toBooking()">Book now</button>
+                    <h4><span class="summary-title">Route summary</span></h4>
+                    <p><b>Departure:</b> {{getDate(selectedRoute.summary.departure_time.value).toDateString()}} at {{selectedRoute.summary.departure_time.text}} from {{selectedRoute.summary.start_location.name}}</p>
+                    <p><b>Arrival:</b> {{getDate(selectedRoute.summary.arrival_time.value).toDateString()}} at {{selectedRoute.summary.arrival_time.text}} at {{selectedRoute.summary.end_location.name}}</p>
+                    <p><b>Travel time:</b> {{convertToHummanReadable(selectedRoute.summary.travel_time.text)}}</p>
+                    <p><b>Wait time:</b> {{convertToHummanReadable(selectedRoute.summary.wait_time.text)}}</p>
+                    <p><b>Transfers on the route:</b> {{selectedRoute.summary.transfers - 1}}</p>
+                    <p><b>Total price:</b> {{computePrice(selectedRoute)}} <small class="text-danger" *ngIf="!checkIfAllAreInternal(selectedRoute)">(The price for some legs is not available.)</small></p>
+                    <button type="submit" id="booking-button" class="btn btn-primary" (click)="toBooking()" [disabled]="!availableBusesOnRoute()">Book now</button>
                 </div>
                 <div *ngIf="cannotGoToBooking">
                     <small class="form-text text-danger">
                         You can not make a booking at the selected bus! <br>The bus has already left!
+                    </small>
+                </div>
+                <div *ngIf="!availableBusesOnRoute()">
+                    <small class="form-text text-danger">
+                        We don't have available buses on this route.
                     </small>
                 </div>
             </div>
@@ -81,9 +196,9 @@
         <div class="clearfix"></div>
     </div>
 
-    <div *ngIf="buses.length === 0 && !initializing" class="row justify-content-center">
+    <div *ngIf="optimalRoutes.length === 0 && !initializing" class="row justify-content-center">
         <div class="col-11 col-md-9">
-            <h3>No buses found.</h3>
+            <h3>No routes found.</h3>
             <button type="submit" id="back-button" class="btn btn-primary" (click)="toMain()">Return to main</button>
         </div>
     </div>

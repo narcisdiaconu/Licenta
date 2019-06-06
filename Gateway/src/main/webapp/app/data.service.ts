@@ -1,12 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { City } from './shared/model/stations/city.model';
-import { NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
 
 @Injectable({ providedIn: 'root' })
 export class DataService {
     private data: BehaviorSubject<any> = new BehaviorSubject<any>({});
-    private date: NgbDateStruct;
 
     constructor() {}
 
@@ -15,12 +12,34 @@ export class DataService {
     }
 
     getMockedData() {
-        this.date = { year: 2019, month: 4, day: 18 };
+        const date = new Date(2019, 5, 5);
         return new BehaviorSubject<any>({
             route: {
-                date: this.date,
-                from: new City(951, 'Iasi'),
-                to: new City(955, 'Piatra Neamt'),
+                date,
+                from: {
+                    id: 2601,
+                    name: 'Transbus Codreanu',
+                    address: 'strada Garii',
+                    latitude: 47.1668849,
+                    longitude: 27.5698032,
+                    cityId: 951,
+                    city: {
+                        id: 951,
+                        name: 'Iasi'
+                    }
+                },
+                to: {
+                    id: 2606,
+                    name: 'Autogara Minut',
+                    address: 'strada Bistritei',
+                    latitude: 46.9289631,
+                    longitude: 26.3591117,
+                    cityId: 955,
+                    city: {
+                        id: 955,
+                        name: 'Piatra Neamt'
+                    }
+                },
                 hour: '04:21'
             },
             buses: [

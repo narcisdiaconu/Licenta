@@ -19,7 +19,7 @@ export class BookingPageComponent implements OnInit {
     data: any;
     userDetails: IUserdetails;
     account: Account;
-    buses: BusModel[];
+    buses: any[];
     ticketsNumber = 0;
     totalPrice = 0;
     paymentMethods: any[];
@@ -63,23 +63,24 @@ export class BookingPageComponent implements OnInit {
     private loadPlacesLeft(): void {
         this.buses.forEach(bus => {
             this.ticketService.ocupiedSeats(bus).subscribe((res: HttpResponse<number>) => {
-                bus.remainingSeats = bus.bus.totalPlaces - res.body;
+                bus.remaining_seats = bus.total_places - res.body;
             });
         });
     }
 
-    getFinalPrice(bus: IBus): number {
+    getFinalPrice(bus): number {
         return bus.price;
     }
 
-    convertDateToString(date): string {
+    convertDateToString(busDate): string {
+        const date = new Date(busDate);
         return new Date(date).toDateString();
     }
 
     book(): void {}
 
     increaseTicketsNumber(): void {
-        if (this.ticketsNumber < this.buses[0].remainingSeats) {
+        if (this.ticketsNumber < this.buses[0].remaining_seats) {
             this.ticketsNumber += 1;
             this.updateTotalPrice();
         }
@@ -99,7 +100,7 @@ export class BookingPageComponent implements OnInit {
     private getTotalPricePerTicket(): number {
         let price = 0;
         this.buses.forEach(bus => {
-            price += this.getFinalPrice(bus.bus);
+            price += this.getFinalPrice(bus);
         });
         return price;
     }

@@ -23,8 +23,8 @@ export class HomeComponent implements OnInit {
     modalRef: NgbModalRef;
     cities: ICity[];
     stations: IStation[];
-    startCity: number;
-    endCity: number;
+    startCity: IStation;
+    endCity: IStation;
     dateModel: NgbDateStruct;
     departureHour: NgbTimeStruct;
     arrivalHour: NgbTimeStruct;
@@ -37,10 +37,10 @@ export class HomeComponent implements OnInit {
         text.pipe(
             debounceTime(200),
             distinctUntilChanged(),
-            map(term => (term.length < 1 ? [] : this.cities.filter(c => c.name.toLowerCase().indexOf(term.toLowerCase()) > -1)))
+            map(term => (term.length < 1 ? [] : this.stations.filter(s => s.city.name.toLowerCase().indexOf(term.toLowerCase()) > -1)))
         );
 
-    formatter = (city: ICity) => city.name;
+    formatter = (station: IStation) => station.city.name + ', ' + station.name;
 
     constructor(
         private accountService: AccountService,
@@ -64,7 +64,6 @@ export class HomeComponent implements OnInit {
         this.accountService.identity().then((account: Account) => {
             this.account = account;
             this.getCities();
-            this.getStations();
         });
         this.registerAuthenticationSuccess();
         this.dataService.getData().subscribe(data => (this.data = data));
@@ -75,6 +74,9 @@ export class HomeComponent implements OnInit {
             .query()
             .pipe(map((response: HttpResponse<IStation[]>) => response.body))
             .subscribe((res: IStation[]) => {
+                res.forEach((station: IStation) => {
+                    station.city = this.getCityForStation(station);
+                });
                 this.stations = res;
             });
     }
@@ -92,7 +94,13 @@ export class HomeComponent implements OnInit {
                 filter((mayBeOk: HttpResponse<ICity[]>) => mayBeOk.ok),
                 map((response: HttpResponse<ICity[]>) => response.body)
             )
-            .subscribe((res: ICity[]) => (this.cities = res), (res: HttpErrorResponse) => this.onError(res.message));
+            .subscribe(
+                (res: ICity[]) => {
+                    this.cities = res;
+                    this.getStations();
+                },
+                (res: HttpErrorResponse) => this.onError(res.message)
+            );
     }
 
     protected onError(errorMessage: string) {
@@ -124,6 +132,7 @@ export class HomeComponent implements OnInit {
             hour: this.convertToDoubleDigits(this.departureHour)
         };
         this.dataService.updateData(this.data);
+        console.log(this.data);
         this.router.navigate(['/buses-page']);
     }
 

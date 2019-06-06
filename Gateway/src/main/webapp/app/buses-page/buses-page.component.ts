@@ -21,6 +21,9 @@ import { CityService } from 'app/entities/stations/city';
 import { Coordinate, Profiles, GeoJson } from 'app/shared/map/map.geojson';
 import { TicketService } from 'app/entities/tickets/ticket';
 import { Location } from '@angular/common';
+import { OptimalRoutesService } from 'app/optimal-routes.service';
+import { IntermediatePointService } from 'app/entities/routes/intermediate-point';
+import { IIntermediatePoint } from 'app/shared/model/routes/intermediate-point.model';
 
 @Component({
     selector: 'jhi-buses-page',
@@ -46,6 +49,12 @@ export class BusesPageComponent implements OnInit {
     cannotGoToBooking = false;
     initializing = true;
 
+    private allData: any = {};
+    private waitingForOptimal = false;
+    loading: boolean;
+    optimalRoutes: any[] = [];
+    selectedRoute: any;
+
     constructor(
         private dataService: DataService,
         private router: Router,
@@ -56,10 +65,13 @@ export class BusesPageComponent implements OnInit {
         private busStopService: BusStopService,
         private cityService: CityService,
         private ticketService: TicketService,
-        private location: Location
+        private location: Location,
+        private optimalRoutesService: OptimalRoutesService,
+        private intermediatePointsService: IntermediatePointService
     ) {}
 
     ngOnInit() {
+        this.loading = true;
         this.map = undefined;
         this.lastBusId = undefined;
         this.showMapView = false;
@@ -72,8 +84,222 @@ export class BusesPageComponent implements OnInit {
             this.data = data;
             this.startLocation = this.data.route.from.name;
             this.endLocation = this.data.route.to.name;
-            this.loadData();
+            // this.loadData();
+            this.loadAllData();
         });
+    }
+
+    private loadAllData(): void {
+        this.loadAllCities();
+        this.loadAllStations();
+        this.loadAllRoutes();
+        this.loadAllBuses();
+    }
+
+    private checkIfAllIsReady(): boolean {
+        let ready = true;
+        if (this.allData.cities === undefined) {
+            return false;
+        }
+        if (this.allData.stations === undefined) {
+            return false;
+        }
+        if (this.allData.routes === undefined) {
+            return false;
+        } else {
+            this.allData.routes.forEach((route: IRoute) => {
+                if (route.intermediatePoints === undefined) {
+                    ready = false;
+                }
+            });
+        }
+        if (!ready) {
+            return false;
+        }
+        if (this.allData.buses === undefined) {
+            return false;
+        } else {
+            this.allData.buses.forEach((bus: IBus) => {
+                if (bus.busStops === undefined) {
+                    ready = false;
+                }
+            });
+        }
+        return ready;
+    }
+
+    private loadOptimalRoutes(): void {
+        if (this.checkIfAllIsReady() && !this.waitingForOptimal) {
+            this.waitingForOptimal = true;
+            this.allData.startLocation = this.data.route.from;
+            this.allData.endLocation = this.data.route.to;
+            const date = new Date(this.data.route.date);
+            date.setHours(this.data.route.hour.split(':')[0]);
+            date.setMinutes(this.data.route.hour.split(':')[1]);
+            this.allData.departureTime = date.getTime() / 1000;
+            this.optimalRoutesService.get(this.allData).subscribe((res: HttpResponse<any>) => {
+                this.optimalRoutes = res.body;
+                this.selectedRoute = res.body[0];
+            });
+        }
+    }
+
+    private loadAllCities() {
+        this.cityService.query().subscribe((res: HttpResponse<ICity[]>) => {
+            this.allData.cities = res.body;
+            this.loadOptimalRoutes();
+        });
+    }
+
+    private loadAllStations() {
+        this.stationService.query().subscribe((res: HttpResponse<IStation[]>) => {
+            this.allData.stations = res.body;
+            this.loadOptimalRoutes();
+        });
+    }
+
+    private loadAllRoutes() {
+        this.routeService.query().subscribe((res: HttpResponse<IRoute[]>) => {
+            this.allData.routes = res.body;
+            for (let i = 0; i < this.allData.routes.length; i++) {
+                this.allData.routes[i].intermediatePoints = undefined;
+            }
+            this.loadAllIntermediatePoints();
+        });
+    }
+
+    private loadAllIntermediatePoints() {
+        this.intermediatePointsService.query().subscribe((res: HttpResponse<IIntermediatePoint[]>) => {
+            res.body.forEach((ip: IIntermediatePoint) => {
+                for (let index = 0; index < this.allData.routes.length; index++) {
+                    if (this.allData.routes[index].id === ip.routeId) {
+                        if (this.allData.routes[index].intermediatePoints === undefined) {
+                            this.allData.routes[index].intermediatePoints = [];
+                        }
+                        this.allData.routes[index].intermediatePoints.push(ip);
+                        break;
+                    }
+                }
+            });
+            this.allData.routes.forEach(route => {
+                if (route.intermediatePoints === undefined) {
+                    route.intermediatePoints = [];
+                }
+            });
+            this.loadOptimalRoutes();
+        });
+    }
+
+    private loadAllBuses() {
+        this.busService.query().subscribe((res: HttpResponse<IBus[]>) => {
+            this.allData.buses = res.body;
+            for (let i = 0; i < this.allData.buses.length; i++) {
+                this.allData.buses[i].busStops = undefined;
+            }
+            this.loadAllBusStops();
+        });
+    }
+
+    private loadAllBusStops() {
+        this.busStopService.query().subscribe((res: HttpResponse<IBusStop[]>) => {
+            res.body.forEach((bs: IBusStop) => {
+                for (let index = 0; index < this.allData.buses.length; index++) {
+                    if (this.allData.buses[index].id === bs.busId) {
+                        if (this.allData.buses[index].busStops === undefined) {
+                            this.allData.buses[index].busStops = [];
+                        }
+                        this.allData.buses[index].busStops.push(bs);
+                        break;
+                    }
+                }
+            });
+            this.allData.buses.forEach((bus: IBus) => {
+                if (bus.busStops === undefined) {
+                    bus.busStops = [];
+                }
+            });
+            this.loadOptimalRoutes();
+        });
+    }
+
+    getDate(seconds: number): Date {
+        const date = new Date();
+        date.setTime(seconds * 1000);
+        return date;
+    }
+
+    changeSelected(route) {
+        const oldElement = document.getElementById(this.selectedRoute.summary.id);
+        oldElement.removeAttribute('class');
+        oldElement.className = 'list-group-item';
+        this.lastBusId = this.selectedRoute.summary.id;
+
+        this.selectedRoute = route;
+        const element = document.getElementById(route.summary.id);
+        element.className = 'list-group-item selected';
+
+        this.cannotGoToBooking = false;
+        // this.drawDirectionOnMap(bus);
+    }
+
+    loadOccupiedSeats(bus: number): number {
+        return 0;
+    }
+
+    isFirstWalking(route: any): boolean {
+        return route.steps[0].travel_mode === 'WALKING';
+    }
+
+    isLastWalking(route: any): boolean {
+        return route.steps[route.steps.length - 1].travel_mode === 'WALKING';
+    }
+
+    availableBusesOnRoute(): boolean {
+        return this.selectedRoute.route.filter(route => route.type === 'INTERNAL').length > 0;
+    }
+
+    convertToHummanReadable(time: string): string {
+        const hour = parseInt(time.split(':')[0], 10);
+        const minute = parseInt(time.split(':')[1], 10);
+        let result = '';
+        if (hour > 0) {
+            result += hour.toString() + ' hour';
+            if (hour > 1) {
+                result += 's';
+            }
+            result += ' ';
+        }
+        if (minute > 0) {
+            result += minute.toString() + ' minute';
+            if (minute > 1) {
+                result += 's';
+            }
+        }
+        if (result === '') {
+            result = '0';
+        }
+        return result;
+    }
+
+    computePrice(route): number {
+        let total_price = 0;
+        route.route.forEach(r => {
+            if (r.price !== undefined) {
+                total_price += r.price;
+            }
+        });
+        return total_price;
+    }
+
+    checkIfAllAreInternal(route): boolean {
+        let result = true;
+        route.route.forEach(r => {
+            if (r.type !== 'INTERNAL') {
+                result = false;
+                return result;
+            }
+        });
+        return result;
     }
 
     private initializeMap() {
@@ -93,24 +319,13 @@ export class BusesPageComponent implements OnInit {
     loadData() {
         this.findStation();
         this.loadCities();
+        this.getRoutes(this.data.route.from, this.data.route.to);
     }
 
     private findStation() {
         this.stationService.query().subscribe(
             (res: HttpResponse<IStation[]>) => {
-                let start, end;
                 this.stations = res.body;
-                res.body.forEach(station => {
-                    if (station.cityId === this.data.route.from.id) {
-                        start = station;
-                    }
-                    if (station.cityId === this.data.route.to.id) {
-                        end = station;
-                    }
-                });
-
-                // Call to get routes on selected station.
-                this.getRoutes(start, end);
             },
             (res: HttpErrorResponse) => console.log(res)
         );
@@ -211,20 +426,6 @@ export class BusesPageComponent implements OnInit {
         return result;
     }
 
-    changeSelected(bus: BusModel) {
-        const oldElement = document.getElementById(this.selectedBus.bus.id.toString());
-        oldElement.removeAttribute('class');
-        oldElement.className = 'list-group-item';
-        this.lastBusId = this.selectedBus.bus.id.toString();
-
-        this.selectedBus = bus;
-        const element = document.getElementById(bus.bus.id.toString());
-        element.className = 'list-group-item selected';
-
-        this.loadIntermediateStops(bus);
-        this.drawDirectionOnMap(bus);
-    }
-
     private getDirections(bus: BusModel) {
         const coordinates: Coordinate[] = [];
         coordinates.push(new Coordinate(bus.start.latitude, bus.start.longitude));
@@ -275,7 +476,6 @@ export class BusesPageComponent implements OnInit {
     private loadOcupiedSeats(bus: BusModel) {
         this.ticketService.ocupiedSeats(bus).subscribe((res: HttpResponse<number>) => {
             bus.remainingSeats = bus.bus.totalPlaces - res.body;
-            console.log(res.body);
             this.updateBusInList(bus);
         });
     }
@@ -388,29 +588,42 @@ export class BusesPageComponent implements OnInit {
     }
 
     toBooking(): void {
-        if (!this.checkIfBusIsAvailable(this.selectedBus)) {
+        const buses = this.extractBuses(this.selectedRoute);
+
+        if (!this.checkIfBusIsAvailable(buses)) {
             this.cannotGoToBooking = true;
             return;
         }
         this.cannotGoToBooking = false;
-        this.selectedBus.directions = undefined;
-        this.data.buses = [this.selectedBus];
+        this.data.buses = buses;
         this.dataService.updateData(this.data);
         this.router.navigate(['/booking-page']);
+    }
+
+    private extractBuses(route) {
+        const result = [];
+        route.route.forEach(r => {
+            if (r.type === 'INTERNAL') {
+                result.push(r);
+            }
+        });
+        return result;
     }
 
     toMain(): void {
         this.location.back();
     }
 
-    private checkIfBusIsAvailable(bus: BusModel): boolean {
-        const today = new Date();
-        const date = new Date(bus.date);
-        date.setHours(parseInt(bus.bus.departureTime.split(':')[0], 10));
-        date.setMinutes(parseInt(bus.bus.departureTime.split(':')[1], 10));
-        if (today.getTime() < date.getTime()) {
-            return true;
-        }
-        return false;
+    private checkIfBusIsAvailable(bus): boolean {
+        let result = true;
+
+        bus.forEach(b => {
+            const today = new Date();
+            const date = new Date(b.departure_time.value);
+            if (today.getTime() > date.getTime()) {
+                result = false;
+            }
+        });
+        return result;
     }
 }

@@ -18,13 +18,14 @@
                     <form class="form-group main-search" name="mainForm" #mainForm="ngForm" *ngSwitchCase="'Route'">
                         <h5 class="font-weight-bold">Choose your route</h5>
                         <label class="form-control-label" for="start_city">From</label>
-                        <ng-template #startCityTemp let-r="result" let-t="term">
-                            <ngb-highlight [result]="r.name" [term]="t"></ngb-highlight>
+                        <ng-template #cityTemplate let-r="result" let-t="term">
+                            <ngb-highlight [result]="r.city.name" [term]="t"></ngb-highlight>
+                            <p class="margin_none">{{r.name}}</p>
                         </ng-template>
-                        <input id="start_city" type="text" class="form-control" name="startCityInput" [(ngModel)]="startCity" required [ngbTypeahead]="search" [resultTemplate]="startCityTemp" [inputFormatter]="formatter">
+                        <input id="start_city" type="text" class="form-control" name="startCityInput" [(ngModel)]="startCity" required [ngbTypeahead]="search" [resultTemplate]="cityTemplate" [inputFormatter]="formatter">
 
                         <label class="form-control-label" for="end_city">To</label>
-                        <input id="end_city" type="text" class="form-control" name="endCityInput" [(ngModel)]="endCity" required [ngbTypeahead]="search" [resultTemplate]="startCityTemp" [inputFormatter]="formatter">
+                        <input id="end_city" type="text" class="form-control" name="endCityInput" [(ngModel)]="endCity" required [ngbTypeahead]="search" [resultTemplate]="cityTemplate" [inputFormatter]="formatter">
                         <label class="form-control-label" for="date_picker">Date</label>
                         <div class="input-group">
                             <input class="form-control" id="date_picker" placeholder="yyyy-mm-dd" name="dp" [(ngModel)]="dateModel" ngbDatepicker #d="ngbDatepicker" required>
@@ -36,18 +37,11 @@
                         <ng-template #departureHourTemplate>
                             <ngb-timepicker [(ngModel)]="departureHour" name="departurePicker" [showMeridian]="false"></ngb-timepicker>
                         </ng-template>
-                        <ng-template #arrivalHourTemplate>
-                            <ngb-timepicker [(ngModel)]="arrivalHour" name="arrivalPicker" [showMeridian]="false"></ngb-timepicker>
-                        </ng-template>
                         <div class="form-row">
                             <div class="col-md-6">
                                 <label class="form-control-label">Departure hour</label>
                                 <input class="form-control" id="departure_hour" [ngModel]="convertTimeToString(departureHour)" [ngbPopover]="departureHourTemplate" name="departure" [autoClose]="'outside'" pattern="([01]?[0-9]{1}|2[0-3]{1}):[0-5]?[0-9]{1}" required>
                             </div>
-                            <!-- <div class="col-md-6">
-                        <label class="form-control-label">Arrival hour</label>
-                        <input class="form-control" id="arrival_hour" [ngModel]="convertToString(arrivalHour)" [ngbPopover]="arrivalHourTemplate" [autoClose]="'outside'">
-                    </div> -->
                         </div><br>
 
                         <button type="submit" id="save-entity" class="btn btn-primary" (click)="toBuses()" [disabled]="mainForm.form.invalid">

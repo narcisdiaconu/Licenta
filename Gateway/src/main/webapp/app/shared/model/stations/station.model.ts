@@ -1,3 +1,5 @@
+import { ICity } from './city.model';
+
 export interface IStation {
     id?: number;
     name?: string;
@@ -5,9 +7,12 @@ export interface IStation {
     latitude?: number;
     longitude?: number;
     cityId?: number;
+    city: ICity;
 }
 
 export class Station implements IStation {
+    city: ICity;
+
     constructor(
         public id?: number,
         public name?: string,

@@ -59,6 +59,10 @@ Main page styles
     cursor: pointer;
 }
 
+.margin_none {
+    margin: 0;
+}
+
 /* wait autoprefixer update to allow simple generation of high pixel density media query */
 
 @media only screen and (-webkit-min-device-pixel-ratio: 2),

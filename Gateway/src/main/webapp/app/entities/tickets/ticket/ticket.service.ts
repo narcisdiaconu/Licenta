@@ -51,7 +51,7 @@ export class TicketService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    ocupiedSeats(req: BusModel): Observable<HttpResponse<number>> {
+    ocupiedSeats(req): Observable<HttpResponse<number>> {
         const convertedData = this.convertBusToOcupiedSeat(req);
         let convert: ITicket = { date: convertedData.date };
         convert = this.convertDateFromClient(convert);
@@ -60,15 +60,18 @@ export class TicketService {
         return this.http.post<number>(`${this.resourceUrl}/ocupied-seats`, convertedData, { observe: 'response' });
     }
 
-    private convertBusToOcupiedSeat(bus: BusModel): IOcupiedSeats {
+    private convertBusToOcupiedSeat(bus): IOcupiedSeats {
         const stops = [];
-        stops.push(bus.route.startStation);
-        bus.bus.busStops.forEach(stop => {
-            stops.push(stop.station);
+        stops.push(bus.start_location.id);
+        bus.steps.forEach(step => {
+            stops.push(step.end_location.id);
         });
-        stops.push(bus.route.endStation);
+        if (bus.steps.length === 0) {
+            stops.push(bus.end_location.id);
+        }
 
-        const data: IOcupiedSeats = new OcupiedSeats(bus.bus.id, stops, moment(bus.date), bus.start.id, bus.end.id);
+        const busDate = new Date(bus.departure_time.value);
+        const data: IOcupiedSeats = new OcupiedSeats(bus.bus_id, stops, moment(busDate), bus.start_location.id, bus.end_location.id);
         return data;
     }
 
