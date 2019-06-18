@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { DataService } from 'app/data.service';
 import { Router } from '@angular/router';
 import { RouteService } from 'app/entities/routes/route';
@@ -25,35 +25,42 @@ import { OptimalRoutesService } from 'app/optimal-routes.service';
 import { IntermediatePointService } from 'app/entities/routes/intermediate-point';
 import { IIntermediatePoint } from 'app/shared/model/routes/intermediate-point.model';
 
+// @ts-ignore
+import {} from 'googlemaps';
+
 @Component({
     selector: 'jhi-buses-page',
     templateUrl: './buses-page.component.html',
     styleUrls: ['./buses-page.component.css']
 })
 export class BusesPageComponent implements OnInit {
+    @ViewChild('googlemap') googlemapElement: any;
     data: any;
     routes: IRoute[];
     stations: IStation[];
     cities: ICity[];
+
     buses: BusModel[];
-    map: mapboxgl.Map;
     startLocation: string;
     endLocation: string;
-    timeout: any;
     selectedBus: BusModel;
     showBusStops: boolean;
-    showMapView: boolean;
     lastBusId: string;
     startMarker: mapboxgl.Marker;
     endMarker: mapboxgl.Marker;
-    cannotGoToBooking = false;
-    initializing = true;
 
+    showMapView: boolean;
+    cannotGoToBooking = false;
     private allData: any = {};
-    private waitingForOptimal = false;
+    private requestSent = false;
+    waitingForOptimal = false;
     loading: boolean;
     optimalRoutes: any[] = [];
     selectedRoute: any;
+    map: google.maps.Map;
+    displayedRoute: string;
+    private displayedLegs: any[] = [];
+    error: boolean;
 
     constructor(
         private dataService: DataService,
@@ -77,6 +84,7 @@ export class BusesPageComponent implements OnInit {
         this.showMapView = false;
         this.showBusStops = false;
         this.buses = [];
+        this.error = false;
         this.dataService.getData().subscribe(data => {
             if (data.route === undefined) {
                 this.router.navigate(['']);
@@ -84,7 +92,6 @@ export class BusesPageComponent implements OnInit {
             this.data = data;
             this.startLocation = this.data.route.from.name;
             this.endLocation = this.data.route.to.name;
-            // this.loadData();
             this.loadAllData();
         });
     }
@@ -129,97 +136,124 @@ export class BusesPageComponent implements OnInit {
     }
 
     private loadOptimalRoutes(): void {
-        if (this.checkIfAllIsReady() && !this.waitingForOptimal) {
+        if (this.checkIfAllIsReady() && !this.requestSent) {
+            this.requestSent = true;
             this.waitingForOptimal = true;
+            this.loading = false;
             this.allData.startLocation = this.data.route.from;
             this.allData.endLocation = this.data.route.to;
             const date = new Date(this.data.route.date);
             date.setHours(this.data.route.hour.split(':')[0]);
             date.setMinutes(this.data.route.hour.split(':')[1]);
             this.allData.departureTime = date.getTime() / 1000;
-            this.optimalRoutesService.get(this.allData).subscribe((res: HttpResponse<any>) => {
-                this.optimalRoutes = res.body;
-                this.selectedRoute = res.body[0];
-            });
+            this.optimalRoutesService.get(this.allData).subscribe(
+                (res: HttpResponse<any>) => {
+                    this.optimalRoutes = res.body;
+                    this.selectedRoute = res.body[0];
+                    this.loadOccupiedSeats(this.selectedRoute);
+                    this.waitingForOptimal = false;
+                },
+                (err: any) => {
+                    this.waitingForOptimal = false;
+                }
+            );
         }
     }
 
     private loadAllCities() {
-        this.cityService.query().subscribe((res: HttpResponse<ICity[]>) => {
-            this.allData.cities = res.body;
-            this.loadOptimalRoutes();
-        });
+        this.cityService.query().subscribe(
+            (res: HttpResponse<ICity[]>) => {
+                this.allData.cities = res.body;
+                this.loadOptimalRoutes();
+            },
+            err => (this.error = true)
+        );
     }
 
     private loadAllStations() {
-        this.stationService.query().subscribe((res: HttpResponse<IStation[]>) => {
-            this.allData.stations = res.body;
-            this.loadOptimalRoutes();
-        });
+        this.stationService.query().subscribe(
+            (res: HttpResponse<IStation[]>) => {
+                this.allData.stations = res.body;
+                this.loadOptimalRoutes();
+            },
+            err => (this.error = true)
+        );
     }
 
     private loadAllRoutes() {
-        this.routeService.query().subscribe((res: HttpResponse<IRoute[]>) => {
-            this.allData.routes = res.body;
-            for (let i = 0; i < this.allData.routes.length; i++) {
-                this.allData.routes[i].intermediatePoints = undefined;
-            }
-            this.loadAllIntermediatePoints();
-        });
+        this.routeService.query().subscribe(
+            (res: HttpResponse<IRoute[]>) => {
+                this.allData.routes = res.body;
+                for (let i = 0; i < this.allData.routes.length; i++) {
+                    this.allData.routes[i].intermediatePoints = undefined;
+                }
+                this.loadAllIntermediatePoints();
+            },
+            err => (this.error = true)
+        );
     }
 
     private loadAllIntermediatePoints() {
-        this.intermediatePointsService.query().subscribe((res: HttpResponse<IIntermediatePoint[]>) => {
-            res.body.forEach((ip: IIntermediatePoint) => {
-                for (let index = 0; index < this.allData.routes.length; index++) {
-                    if (this.allData.routes[index].id === ip.routeId) {
-                        if (this.allData.routes[index].intermediatePoints === undefined) {
-                            this.allData.routes[index].intermediatePoints = [];
+        this.intermediatePointsService.query().subscribe(
+            (res: HttpResponse<IIntermediatePoint[]>) => {
+                res.body.forEach((ip: IIntermediatePoint) => {
+                    for (let index = 0; index < this.allData.routes.length; index++) {
+                        if (this.allData.routes[index].id === ip.routeId) {
+                            if (this.allData.routes[index].intermediatePoints === undefined) {
+                                this.allData.routes[index].intermediatePoints = [];
+                            }
+                            this.allData.routes[index].intermediatePoints.push(ip);
+                            break;
                         }
-                        this.allData.routes[index].intermediatePoints.push(ip);
-                        break;
                     }
-                }
-            });
-            this.allData.routes.forEach(route => {
-                if (route.intermediatePoints === undefined) {
-                    route.intermediatePoints = [];
-                }
-            });
-            this.loadOptimalRoutes();
-        });
+                });
+                this.allData.routes.forEach(route => {
+                    if (route.intermediatePoints === undefined) {
+                        route.intermediatePoints = [];
+                    }
+                });
+                this.loadOptimalRoutes();
+            },
+            err => (this.error = true)
+        );
     }
 
     private loadAllBuses() {
-        this.busService.query().subscribe((res: HttpResponse<IBus[]>) => {
-            this.allData.buses = res.body;
-            for (let i = 0; i < this.allData.buses.length; i++) {
-                this.allData.buses[i].busStops = undefined;
-            }
-            this.loadAllBusStops();
-        });
+        this.busService.query().subscribe(
+            (res: HttpResponse<IBus[]>) => {
+                this.allData.buses = res.body;
+                for (let i = 0; i < this.allData.buses.length; i++) {
+                    this.allData.buses[i].busStops = undefined;
+                }
+                this.loadAllBusStops();
+            },
+            err => (this.error = true)
+        );
     }
 
     private loadAllBusStops() {
-        this.busStopService.query().subscribe((res: HttpResponse<IBusStop[]>) => {
-            res.body.forEach((bs: IBusStop) => {
-                for (let index = 0; index < this.allData.buses.length; index++) {
-                    if (this.allData.buses[index].id === bs.busId) {
-                        if (this.allData.buses[index].busStops === undefined) {
-                            this.allData.buses[index].busStops = [];
+        this.busStopService.query().subscribe(
+            (res: HttpResponse<IBusStop[]>) => {
+                res.body.forEach((bs: IBusStop) => {
+                    for (let index = 0; index < this.allData.buses.length; index++) {
+                        if (this.allData.buses[index].id === bs.busId) {
+                            if (this.allData.buses[index].busStops === undefined) {
+                                this.allData.buses[index].busStops = [];
+                            }
+                            this.allData.buses[index].busStops.push(bs);
+                            break;
                         }
-                        this.allData.buses[index].busStops.push(bs);
-                        break;
                     }
-                }
-            });
-            this.allData.buses.forEach((bus: IBus) => {
-                if (bus.busStops === undefined) {
-                    bus.busStops = [];
-                }
-            });
-            this.loadOptimalRoutes();
-        });
+                });
+                this.allData.buses.forEach((bus: IBus) => {
+                    if (bus.busStops === undefined) {
+                        bus.busStops = [];
+                    }
+                });
+                this.loadOptimalRoutes();
+            },
+            err => (this.error = true)
+        );
     }
 
     getDate(seconds: number): Date {
@@ -234,16 +268,40 @@ export class BusesPageComponent implements OnInit {
         oldElement.className = 'list-group-item';
         this.lastBusId = this.selectedRoute.summary.id;
 
+        if (route.occupied_seats === undefined) {
+            route.occupied_seats = 0;
+        }
         this.selectedRoute = route;
         const element = document.getElementById(route.summary.id);
         element.className = 'list-group-item selected';
 
         this.cannotGoToBooking = false;
-        // this.drawDirectionOnMap(bus);
+        this.loadOccupiedSeats(route);
+        this.displayRouteOnMap(route);
     }
 
-    loadOccupiedSeats(bus: number): number {
-        return 0;
+    loadOccupiedSeats(route: any) {
+        route.route.forEach(leg => {
+            if (leg.type === 'INTERNAL') {
+                this.routeService.find(leg.route_id).subscribe(
+                    (r: HttpResponse<IRoute>) => {
+                        this.busStopService.getByBus(leg.bus_id).subscribe(
+                            (stops: HttpResponse<IBusStop[]>) => {
+                                const points = [];
+                                points.push(r.body.startStation);
+                                stops.body.forEach(s => points.push(s.station));
+                                points.push(r.body.endStation);
+                                this.ticketService.ocupiedSeats(leg, points).subscribe((value: HttpResponse<number>) => {
+                                    leg.empty_seats = leg.total_places - value.body;
+                                });
+                            },
+                            err => (leg.empty_seats = 0)
+                        );
+                    },
+                    err => (leg.empty_seats = 0)
+                );
+            }
+        });
     }
 
     isFirstWalking(route: any): boolean {
@@ -302,19 +360,184 @@ export class BusesPageComponent implements OnInit {
         return result;
     }
 
-    private initializeMap() {
-        this.map = new mapboxgl.Map({
-            container: 'mapbox',
-            style: 'mapbox://styles/mapbox/outdoors-v9',
-            zoom: 13,
-            center: [27.5855732, 47.1678665]
-        });
+    enableMap(): void {
+        this.showMapView = !this.showMapView;
 
-        this.map.on('load', () => {
-            this.map.resize();
-            this.getDirections(this.selectedBus);
+        if (this.map === undefined) {
+            this.initializeMap();
+        } else {
+            this.displayRouteOnMap(this.selectedRoute);
+        }
+    }
+
+    private initializeMap() {
+        this.map = new google.maps.Map(this.googlemapElement.nativeElement, {
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            zoom: 13,
+            center: new google.maps.LatLng(47.1678665, 27.5855732)
+        });
+        this.displayRouteOnMap(this.selectedRoute);
+    }
+
+    private displayRouteOnMap(route) {
+        if (this.showMapView !== true) {
+            return;
+        }
+
+        this.hideOldRoute(this.displayedRoute);
+
+        if (this.showOldRoute(route.summary.id)) {
+            this.displayedRoute = route.summary.id;
+            return;
+        }
+
+        const newLeg = { id: route.summary.id, legs: [] };
+
+        route.route.forEach(r => {
+            if (r.type === 'INTERNAL') {
+                newLeg.legs.push(this.displayBusOnMap(r));
+            } else if (r.type === 'EXTERNAL') {
+                r.steps.forEach(step => {
+                    if (step.travel_mode === 'WALKING') {
+                        newLeg.legs.push(this.displayWalkOnMap(step));
+                    } else if (step.travel_mode === 'TRANSIT') {
+                        newLeg.legs.push(this.displayTransitOnMap(step));
+                    }
+                });
+            }
+        });
+        this.displayedRoute = route.summary.id;
+        this.displayedLegs.push(newLeg);
+    }
+
+    private hideOldRoute(route) {
+        this.displayedLegs.forEach(leg => {
+            if (leg.id === route) {
+                leg.legs.forEach(l => {
+                    l.path.setMap(null);
+                    l.startMarker.setMap(null);
+                    l.endMarker.setMap(null);
+                });
+                return;
+            }
         });
     }
+
+    private showOldRoute(route) {
+        let found = false;
+        this.displayedLegs.forEach(leg => {
+            if (leg.id === route) {
+                console.log(leg);
+                leg.legs.forEach(l => {
+                    l.path.setMap(this.map);
+                    l.startMarker.setMap(this.map);
+                    l.endMarker.setMap(this.map);
+                });
+                found = true;
+            }
+        });
+        return found;
+    }
+
+    private displayBusOnMap(bus) {
+        const coordinates = [];
+        if (bus.steps.length > 0) {
+            bus.steps.forEach(step => {
+                coordinates.push({
+                    lat: step.start_location.latitude,
+                    lng: step.start_location.longitude
+                });
+                coordinates.push({
+                    lat: step.end_location.latitude,
+                    lng: step.end_location.longitude
+                });
+            });
+        } else {
+            coordinates.push({
+                lat: bus.start_location.latitude,
+                lng: bus.start_location.longitude
+            });
+            coordinates.push({
+                lat: bus.end_location.latitude,
+                lng: bus.end_location.longitude
+            });
+        }
+
+        const path = new google.maps.Polyline({
+            path: coordinates,
+            strokeColor: '#125fd3',
+            map: this.map
+        });
+        const startMarker = new google.maps.Marker({
+            position: {
+                lat: bus.start_location.latitude,
+                lng: bus.start_location.longitude
+            },
+            map: this.map,
+            title: 'Start'
+        });
+        const endMarker = new google.maps.Marker({
+            position: {
+                lat: bus.end_location.latitude,
+                lng: bus.end_location.longitude
+            },
+            map: this.map,
+            title: 'End'
+        });
+        return { path, startMarker, endMarker };
+    }
+
+    private displayWalkOnMap(walk) {
+        const path = new google.maps.Polyline({
+            path: google.maps.geometry.encoding.decodePath(walk.polyline.points),
+            strokeColor: '#3c8a08',
+            map: this.map
+        });
+        const startMarker = new google.maps.Marker({
+            position: {
+                lat: walk.start_location.latitude,
+                lng: walk.start_location.longitude
+            },
+            map: this.map,
+            title: 'Start'
+        });
+        const endMarker = new google.maps.Marker({
+            position: {
+                lat: walk.end_location.latitude,
+                lng: walk.end_location.longitude
+            },
+            map: this.map,
+            title: 'End'
+        });
+        return { path, startMarker, endMarker };
+    }
+
+    private displayTransitOnMap(transit) {
+        const path = new google.maps.Polyline({
+            path: google.maps.geometry.encoding.decodePath(transit.polyline.points),
+            strokeColor: '#8218f4',
+            map: this.map
+        });
+        const startMarker = new google.maps.Marker({
+            position: {
+                lat: transit.start_location.latitude,
+                lng: transit.start_location.longitude
+            },
+            map: this.map,
+            title: 'Start'
+        });
+        const endMarker = new google.maps.Marker({
+            position: {
+                lat: transit.end_location.latitude,
+                lng: transit.end_location.longitude
+            },
+            map: this.map,
+            title: 'End'
+        });
+        return { path, startMarker, endMarker };
+    }
+
+    // Unused functions
 
     loadData() {
         this.findStation();
@@ -378,7 +601,6 @@ export class BusesPageComponent implements OnInit {
                 this.selectedBus = this.buses[0];
                 this.loadIntermediateStops(this.selectedBus);
             }
-            this.initializing = false;
         });
     }
 
@@ -440,7 +662,7 @@ export class BusesPageComponent implements OnInit {
         this.mapService.retrieveDirections(Profiles.Driving, coordinates).subscribe((res: HttpResponse<any>) => {
             bus.directions = res.body;
             this.updateBusInList(bus);
-            this.drawDirectionOnMap(bus);
+            // this.drawDirectionOnMap(bus);
         });
     }
 
@@ -469,14 +691,6 @@ export class BusesPageComponent implements OnInit {
             bus.bus.busStops = res.body;
             this.updateBusInList(bus);
             this.getDirections(bus);
-            this.loadOcupiedSeats(bus);
-        });
-    }
-
-    private loadOcupiedSeats(bus: BusModel) {
-        this.ticketService.ocupiedSeats(bus).subscribe((res: HttpResponse<number>) => {
-            bus.remainingSeats = bus.bus.totalPlaces - res.body;
-            this.updateBusInList(bus);
         });
     }
 
@@ -500,92 +714,7 @@ export class BusesPageComponent implements OnInit {
         });
     }
 
-    enableMap(): void {
-        this.showMapView = !this.showMapView;
-
-        if (this.map === undefined) {
-            this.initializeMap();
-        } else {
-            if (this.selectedBus.directions === undefined) {
-                this.getDirections(this.selectedBus);
-            } else {
-                this.drawDirectionOnMap(this.selectedBus);
-            }
-        }
-    }
-
-    private drawDirectionOnMap(bus: BusModel) {
-        if (!this.showMapView) {
-            return;
-        }
-        if (this.lastBusId !== undefined) {
-            this.map.setLayoutProperty(this.lastBusId, 'visibility', 'none');
-        }
-
-        if (bus.directions === undefined) {
-            return;
-        }
-        if (this.map.getLayer(this.selectedBus.bus.id.toString())) {
-            this.map.setLayoutProperty(this.selectedBus.bus.id.toString(), 'visibility', 'visible');
-            return;
-        }
-        const geojson = new GeoJson(bus.directions.routes[0].geometry.coordinates, {});
-
-        // Create markers
-        // let markerDiv = document.createElement('div');
-        // let icon = document.createElement('fa-icon');
-        // icon.setAttribute('icon', 'map-marker');
-        // icon.className = 'start-marker';
-        // markerDiv.appendChild(icon);
-
-        if (this.startMarker !== undefined) {
-            this.startMarker.remove();
-        }
-        this.startMarker = new mapboxgl.Marker().setLngLat(geojson.geometry.coordinates[0]).addTo(this.map);
-
-        // markerDiv = document.createElement('div');
-        // icon = document.createElement('fa-icon');
-        // icon.setAttribute('icon', 'map-marker');
-        // icon.className = 'end-marker';
-        // markerDiv.appendChild(icon);
-
-        if (this.endMarker !== undefined) {
-            this.endMarker.remove();
-        }
-        this.endMarker = new mapboxgl.Marker()
-            .setLngLat(geojson.geometry.coordinates[geojson.geometry.coordinates.length - 1])
-            .addTo(this.map);
-
-        // Display direction on map
-        this.map.addLayer({
-            id: bus.bus.id.toString(),
-            type: 'line',
-            source: {
-                type: 'geojson',
-                data: {
-                    type: 'Feature',
-                    properties: {},
-                    geometry: {
-                        type: 'LineString',
-                        coordinates: geojson.geometry.coordinates
-                    }
-                }
-            },
-            layout: {
-                'line-join': 'round',
-                'line-cap': 'round'
-            },
-            paint: {
-                'line-color': '#8218f4',
-                'line-width': 5
-            }
-        });
-
-        this.map.flyTo({
-            center: geojson.geometry.coordinates[0],
-            zoom: 10
-        });
-    }
+    // Used functions
 
     toBooking(): void {
         const buses = this.extractBuses(this.selectedRoute);
@@ -619,8 +748,10 @@ export class BusesPageComponent implements OnInit {
 
         bus.forEach(b => {
             const today = new Date();
-            const date = new Date(b.departure_time.value);
+            const date = new Date(b.departure_time.value * 1000);
             if (today.getTime() > date.getTime()) {
+                console.log(date.getTime());
+                console.log(today.getTime());
                 result = false;
             }
         });

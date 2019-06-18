@@ -12,7 +12,7 @@ import { BusService } from './bus.service';
     templateUrl: './bus-delete-dialog.component.html'
 })
 export class BusDeleteDialogComponent {
-    bus: IBus;
+    id: number;
 
     constructor(protected busService: BusService, public activeModal: NgbActiveModal, protected eventManager: JhiEventManager) {}
 
@@ -28,38 +28,5 @@ export class BusDeleteDialogComponent {
             });
             this.activeModal.dismiss(true);
         });
-    }
-}
-
-@Component({
-    selector: 'jhi-bus-delete-popup',
-    template: ''
-})
-export class BusDeletePopupComponent implements OnInit, OnDestroy {
-    protected ngbModalRef: NgbModalRef;
-
-    constructor(protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
-
-    ngOnInit() {
-        this.activatedRoute.data.subscribe(({ bus }) => {
-            setTimeout(() => {
-                this.ngbModalRef = this.modalService.open(BusDeleteDialogComponent as Component, { size: 'lg', backdrop: 'static' });
-                this.ngbModalRef.componentInstance.bus = bus;
-                this.ngbModalRef.result.then(
-                    result => {
-                        this.router.navigate(['/bus', { outlets: { popup: null } }]);
-                        this.ngbModalRef = null;
-                    },
-                    reason => {
-                        this.router.navigate(['/bus', { outlets: { popup: null } }]);
-                        this.ngbModalRef = null;
-                    }
-                );
-            }, 0);
-        });
-    }
-
-    ngOnDestroy() {
-        this.ngbModalRef = null;
     }
 }

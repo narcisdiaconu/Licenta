@@ -1,13 +1,18 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <div *ngIf="bus">
-            <h2><span>Bus</span> {{bus.id}}</h2>
+            <h2><span>Bus</span></h2>
             <hr>
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
                 <dt><span>Route</span></dt>
                 <dd>
-                    <span>{{bus.route}}</span>
+                    <div *ngIf="bus.routeModel">
+                        <span>{{bus.routeModel.title}}</span>
+                    </div>
+                    <div *ngIf="!bus.routeModel">
+                        <span>{{bus.route}}</span>
+                    </div>
                 </dd>
                 <dt><span>Price</span></dt>
                 <dd>
@@ -31,15 +36,11 @@
                 </dd>
             </dl>
 
-            <button type="submit"
-                    (click)="previousState()"
-                    class="btn btn-info">
+            <button type="submit" (click)="previousState()" class="btn btn-info">
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span> Back</span>
             </button>
 
-            <button type="button"
-                    [routerLink]="['/bus', bus.id, 'edit']"
-                    class="btn btn-primary">
+            <button type="button" [routerLink]="['/bus', bus.id, 'edit']" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span> Edit</span>
             </button>
         </div>

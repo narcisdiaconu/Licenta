@@ -13,45 +13,59 @@
     <div class="table-responsive" *ngIf="routes">
         <table class="table table-striped">
             <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
-            <th jhiSortBy="id"><span>ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="title"><span>Title</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="startStation"><span>Start Station</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="endStation"><span>End Station</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th></th>
-            </tr>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
+                    <th jhiSortBy="title"><span>Title</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="startStation"><span>Start Station</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="endStation"><span>End Station</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th><span>Stops</span>
+                    </th>
+                    <th></th>
+                </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let route of routes ;trackBy: trackId">
-                <td><a [routerLink]="['/route', route.id, 'view' ]">{{route.id}}</a></td>
-                <td>{{route.title}}</td>
-                <td>{{route.startStation}}</td>
-                <td>{{route.endStation}}</td>
-                <td class="text-right">
-                    <div class="btn-group flex-btn-group-container">
-                        <button type="submit"
-                                [routerLink]="['/route', route.id, 'view' ]"
-                                class="btn btn-info btn-sm">
+                <tr *ngFor="let route of routes ;trackBy: trackId">
+                    <td>{{route.title}}</td>
+                    <td>
+                        <div *ngIf="route.startLocation">
+                            <a [routerLink]="['/station', route.startLocation.id, 'view']">{{route.startLocation.name}}</a>
+                        </div>
+                    </td>
+                    <td>
+                        <div *ngIf="route.endLocation">
+                            <a [routerLink]="['/station', route.endLocation.id, 'view']">{{route.endLocation.name}}</a>
+                        </div>
+                    </td>
+                    <td>
+                        <div *ngIf="route.intermediatePoints">
+                            {{route.intermediatePoints.length}}
+                        </div>
+                        <div *ngIf="route.intermediatePoints === undefined">
+                            0
+                        </div>
+                    </td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit" [routerLink]="['/route', route.id, 'view' ]" class="btn btn-info btn-sm">
                             <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline">View</span>
                         </button>
-                        <button type="submit"
-                                [routerLink]="['/route', route.id, 'edit']"
-                                class="btn btn-primary btn-sm">
+                            <button type="submit" [routerLink]="['/route', route.id, 'edit']" class="btn btn-primary btn-sm">
                             <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline">Edit</span>
                         </button>
-                        <button type="submit"
-                                [routerLink]="['/', 'route', { outlets: { popup: route.id + '/delete'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm">
+                            <button type="submit" (click)="openDeletePopup(route.id)" class="btn btn-danger btn-sm">
                             <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline">Delete</span>
                         </button>
-                    </div>
-                </td>
-            </tr>
+                        </div>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

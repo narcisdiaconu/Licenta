@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { activateRoute, passwordRoute, passwordResetFinishRoute, passwordResetInitRoute, registerRoute, settingsRoute } from './';
 import { detailsRoute } from './details/details.route';
+import { myTicketsRoute } from './tickets/tickets.route';
 
 const ACCOUNT_ROUTES = [
     activateRoute,
@@ -10,7 +11,8 @@ const ACCOUNT_ROUTES = [
     passwordResetInitRoute,
     registerRoute,
     settingsRoute,
-    detailsRoute
+    detailsRoute,
+    myTicketsRoute
 ];
 
 export const accountState: Routes = [

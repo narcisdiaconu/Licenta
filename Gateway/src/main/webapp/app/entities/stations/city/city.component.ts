@@ -10,6 +10,8 @@ import { AccountService } from 'app/core';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { CityService } from './city.service';
+import { NgbModalRef, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CityDeleteDialogComponent } from './city-delete-dialog.component';
 
 @Component({
     selector: 'jhi-city',
@@ -29,6 +31,7 @@ export class CityComponent implements OnInit, OnDestroy {
     predicate: any;
     previousPage: any;
     reverse: any;
+    protected ngbModalRef: NgbModalRef;
 
     constructor(
         protected cityService: CityService,
@@ -37,7 +40,8 @@ export class CityComponent implements OnInit, OnDestroy {
         protected accountService: AccountService,
         protected activatedRoute: ActivatedRoute,
         protected router: Router,
-        protected eventManager: JhiEventManager
+        protected eventManager: JhiEventManager,
+        protected modalService: NgbModal
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
@@ -100,7 +104,9 @@ export class CityComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
+        if (this.eventSubscriber !== undefined) {
+            this.eventManager.destroy(this.eventSubscriber);
+        }
     }
 
     trackId(index: number, item: ICity) {
@@ -127,5 +133,22 @@ export class CityComponent implements OnInit, OnDestroy {
 
     protected onError(errorMessage: string) {
         this.jhiAlertService.error(errorMessage, null, null);
+    }
+
+    openDeletePopup(id: number) {
+        setTimeout(() => {
+            this.ngbModalRef = this.modalService.open(CityDeleteDialogComponent as Component, { size: 'lg', backdrop: 'static' });
+            this.ngbModalRef.componentInstance.id = id;
+            this.ngbModalRef.result.then(
+                result => {
+                    this.router.navigate(['/city']);
+                    this.ngbModalRef = null;
+                },
+                reason => {
+                    this.router.navigate(['/city']);
+                    this.ngbModalRef = null;
+                }
+            );
+        }, 0);
     }
 }

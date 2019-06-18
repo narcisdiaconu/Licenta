@@ -3,6 +3,7 @@ package com.busticketbooking.routes.service.impl;
 import com.busticketbooking.routes.service.RouteService;
 import com.busticketbooking.routes.domain.IntermediatePoint;
 import com.busticketbooking.routes.domain.Route;
+import com.busticketbooking.routes.repository.IntermediatePointRepository;
 import com.busticketbooking.routes.repository.RouteRepository;
 import com.busticketbooking.routes.service.dto.RouteDTO;
 import com.busticketbooking.routes.service.mapper.RouteMapper;
@@ -33,9 +34,12 @@ public class RouteServiceImpl implements RouteService {
 
     private final RouteMapper routeMapper;
 
-    public RouteServiceImpl(RouteRepository routeRepository, RouteMapper routeMapper) {
+    private final IntermediatePointRepository ipRepository;
+
+    public RouteServiceImpl(RouteRepository routeRepository, RouteMapper routeMapper, IntermediatePointRepository ipRepository) {
         this.routeRepository = routeRepository;
         this.routeMapper = routeMapper;
+        this.ipRepository = ipRepository;
     }
 
     /**
@@ -89,6 +93,9 @@ public class RouteServiceImpl implements RouteService {
     @Override
     public void delete(Long id) {
         log.debug("Request to delete Route : {}", id);
+        for (IntermediatePoint ip : ipRepository.findByRoute(routeRepository.findById(id).get())) {
+            ipRepository.delete(ip);
+        }
         routeRepository.deleteById(id);
     }
 

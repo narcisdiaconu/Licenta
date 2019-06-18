@@ -12,7 +12,7 @@ import { RouteService } from './route.service';
     templateUrl: './route-delete-dialog.component.html'
 })
 export class RouteDeleteDialogComponent {
-    route: IRoute;
+    id: number;
 
     constructor(protected routeService: RouteService, public activeModal: NgbActiveModal, protected eventManager: JhiEventManager) {}
 
@@ -28,38 +28,5 @@ export class RouteDeleteDialogComponent {
             });
             this.activeModal.dismiss(true);
         });
-    }
-}
-
-@Component({
-    selector: 'jhi-route-delete-popup',
-    template: ''
-})
-export class RouteDeletePopupComponent implements OnInit, OnDestroy {
-    protected ngbModalRef: NgbModalRef;
-
-    constructor(protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
-
-    ngOnInit() {
-        this.activatedRoute.data.subscribe(({ route }) => {
-            setTimeout(() => {
-                this.ngbModalRef = this.modalService.open(RouteDeleteDialogComponent as Component, { size: 'lg', backdrop: 'static' });
-                this.ngbModalRef.componentInstance.route = route;
-                this.ngbModalRef.result.then(
-                    result => {
-                        this.router.navigate(['/route', { outlets: { popup: null } }]);
-                        this.ngbModalRef = null;
-                    },
-                    reason => {
-                        this.router.navigate(['/route', { outlets: { popup: null } }]);
-                        this.ngbModalRef = null;
-                    }
-                );
-            }, 0);
-        });
-    }
-
-    ngOnDestroy() {
-        this.ngbModalRef = null;
     }
 }

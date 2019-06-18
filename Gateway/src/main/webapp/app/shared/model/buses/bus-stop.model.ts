@@ -1,3 +1,5 @@
+import { IStation } from '../stations/station.model';
+
 export interface IBusStop {
     id?: number;
     station?: number;
@@ -5,6 +7,7 @@ export interface IBusStop {
     departureTime?: string;
     price?: number;
     busId?: number;
+    stationModel?: IStation;
 }
 
 export class BusStop implements IBusStop {

@@ -28,53 +28,61 @@
                 </a>
                 <ul class="dropdown-menu" ngbDropdownMenu aria-labelledby="entity-menu">
                     <li>
-                        <a class="dropdown-item" routerLink="userdetails" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="city" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
-                            <span>Userdetails</span>
+                            <span>City</span>
                         </a>
                     </li>
+
                     <li>
                         <a class="dropdown-item" routerLink="station" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
                             <span>Station</span>
                         </a>
                     </li>
+
                     <li>
                         <a class="dropdown-item" routerLink="route" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
                             <span>Route</span>
                         </a>
                     </li>
+
                     <li>
                         <a class="dropdown-item" routerLink="bus" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
                             <span>Bus</span>
                         </a>
                     </li>
-                    <li>
-                        <a class="dropdown-item" routerLink="city" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
-                            <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
-                            <span>City</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" routerLink="intermediate-point" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
-                            <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
-                            <span>Intermediate Point</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" routerLink="bus-stop" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
-                            <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
-                            <span>Bus Stop</span>
-                        </a>
-                    </li>
+
                     <li>
                         <a class="dropdown-item" routerLink="ticket" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
                             <span>Ticket</span>
                         </a>
                     </li>
+
+                    <li>
+                        <a class="dropdown-item" routerLink="userdetails" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
+                            <span>Userdetails</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item" routerLink="intermediate-point" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
+                            <span>Intermediate Point</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item" routerLink="bus-stop" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
+                            <span>Bus Stop</span>
+                        </a>
+                    </li>
+
                     <!-- jhipster-needle-add-entity-to-menu - JHipster will add entities to the menu here -->
                 </ul>
             </li>
@@ -147,10 +155,10 @@
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="account-menu">
                     <span *ngIf="!getImageUrl()">
                     <fa-icon icon="user"></fa-icon>
-                    <span *ngIf="isAuthenticated()">
+                    <span *ngIf="isAuthenticated() && account !== undefined">
                       {{account.login}}
                     </span>
-                    <span *ngIf="!isAuthenticated()">
+                    <span *ngIf="!isAuthenticated() || account === undefined">
                         Account
                     </span>
                     </span>
@@ -163,6 +171,12 @@
                         <a class="dropdown-item" routerLink="settings" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon icon="wrench" fixedWidth="true"></fa-icon>
                             <span>Your profile</span>
+                        </a>
+                    </li>
+                    <li *ngSwitchCase="true">
+                        <a class="dropdown-item" routerLink="my-tickets" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon icon="ticket-alt" fixedWidth="true"></fa-icon>
+                            <span>Your tickets</span>
                         </a>
                     </li>
                     <li *ngSwitchCase="true">

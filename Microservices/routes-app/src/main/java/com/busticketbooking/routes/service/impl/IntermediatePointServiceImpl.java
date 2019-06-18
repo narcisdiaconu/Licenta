@@ -2,7 +2,9 @@ package com.busticketbooking.routes.service.impl;
 
 import com.busticketbooking.routes.service.IntermediatePointService;
 import com.busticketbooking.routes.domain.IntermediatePoint;
+import com.busticketbooking.routes.domain.Route;
 import com.busticketbooking.routes.repository.IntermediatePointRepository;
+import com.busticketbooking.routes.repository.RouteRepository;
 import com.busticketbooking.routes.service.dto.IntermediatePointDTO;
 import com.busticketbooking.routes.service.mapper.IntermediatePointMapper;
 import org.slf4j.Logger;
@@ -13,7 +15,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service Implementation for managing IntermediatePoint.
@@ -28,9 +34,12 @@ public class IntermediatePointServiceImpl implements IntermediatePointService {
 
     private final IntermediatePointMapper intermediatePointMapper;
 
-    public IntermediatePointServiceImpl(IntermediatePointRepository intermediatePointRepository, IntermediatePointMapper intermediatePointMapper) {
+    private final RouteRepository routeRepository;
+
+    public IntermediatePointServiceImpl(IntermediatePointRepository intermediatePointRepository, IntermediatePointMapper intermediatePointMapper, RouteRepository routeRepository) {
         this.intermediatePointRepository = intermediatePointRepository;
         this.intermediatePointMapper = intermediatePointMapper;
+        this.routeRepository = routeRepository;
     }
 
     /**
@@ -85,5 +94,22 @@ public class IntermediatePointServiceImpl implements IntermediatePointService {
     public void delete(Long id) {
         log.debug("Request to delete IntermediatePoint : {}", id);
         intermediatePointRepository.deleteById(id);
+    }
+
+    public List<IntermediatePointDTO> findByRoute(Long routeId) {
+        Optional<Route> route = routeRepository.findById(routeId);
+        if (!route.isPresent()) {
+            return null;
+        }
+
+        List<IntermediatePointDTO> result = intermediatePointRepository.findByRoute(route.get()).stream().map(intermediatePointMapper::toDto).collect(Collectors.toList());
+
+        Collections.sort(result, new Comparator<IntermediatePointDTO>() {
+            public int compare(IntermediatePointDTO i1, IntermediatePointDTO i2) {
+                return i1.getIndex().compareTo(i2.getIndex());
+            }
+        });
+
+        return result;
     }
 }

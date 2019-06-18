@@ -125,4 +125,10 @@ public class TicketResource {
         Long result = ticketService.getOcupiedSeats(ocupiedSeatsDTO);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/tickets/user/{id}")
+    public ResponseEntity<List<TicketDTO>> getTicketForUser(@PathVariable Long id) {
+        List<TicketDTO> tickets = ticketService.getTicketsForUser(id);
+        return ResponseEntity.ok().body(tickets);
+    }
 }

@@ -10,6 +10,10 @@ import { AccountService } from 'app/core';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { StationService } from './station.service';
+import { CityService } from '../city';
+import { ICity } from 'app/shared/model/stations/city.model';
+import { NgbModalRef, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { StationDeleteDialogComponent } from './station-delete-dialog.component';
 
 @Component({
     selector: 'jhi-station',
@@ -29,6 +33,7 @@ export class StationComponent implements OnInit, OnDestroy {
     predicate: any;
     previousPage: any;
     reverse: any;
+    private ngbModalRef: NgbModalRef;
 
     constructor(
         protected stationService: StationService,
@@ -37,7 +42,9 @@ export class StationComponent implements OnInit, OnDestroy {
         protected accountService: AccountService,
         protected activatedRoute: ActivatedRoute,
         protected router: Router,
-        protected eventManager: JhiEventManager
+        protected eventManager: JhiEventManager,
+        private citiesService: CityService,
+        private modalService: NgbModal
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
@@ -100,7 +107,9 @@ export class StationComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
+        if (this.eventSubscriber) {
+            this.eventManager.destroy(this.eventSubscriber);
+        }
     }
 
     trackId(index: number, item: IStation) {
@@ -123,9 +132,31 @@ export class StationComponent implements OnInit, OnDestroy {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
         this.stations = data;
+        this.stations.forEach(station => this.loadCity(station));
+    }
+
+    private loadCity(station: IStation) {
+        this.citiesService.find(station.cityId).subscribe((res: HttpResponse<ICity>) => (station.city = res.body));
     }
 
     protected onError(errorMessage: string) {
         this.jhiAlertService.error(errorMessage, null, null);
+    }
+
+    openDeletePopup(id: number) {
+        setTimeout(() => {
+            this.ngbModalRef = this.modalService.open(StationDeleteDialogComponent as Component, { size: 'lg', backdrop: 'static' });
+            this.ngbModalRef.componentInstance.id = id;
+            this.ngbModalRef.result.then(
+                result => {
+                    this.router.navigate(['/station']);
+                    this.ngbModalRef = null;
+                },
+                reason => {
+                    this.router.navigate(['/station']);
+                    this.ngbModalRef = null;
+                }
+            );
+        }, 0);
     }
 }

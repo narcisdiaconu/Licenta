@@ -30,6 +30,9 @@ export class StationUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ station }) => {
             this.station = station;
+            if (this.station.cityId) {
+                this.cityService.find(this.station.cityId).subscribe((res: HttpResponse<ICity>) => (this.station.city = res.body));
+            }
         });
         this.cityService
             .query()

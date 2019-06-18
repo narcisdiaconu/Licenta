@@ -13,53 +13,53 @@
     <div class="table-responsive" *ngIf="stations">
         <table class="table table-striped">
             <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
-            <th jhiSortBy="id"><span>ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="name"><span>Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="address"><span>Address</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="latitude"><span>Latitude</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="longitude"><span>Longitude</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th jhiSortBy="cityId"><span>City</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-            <th></th>
-            </tr>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
+                    <th jhiSortBy="name"><span>Name</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="cityId"><span>City</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="address"><span>Address</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="latitude"><span>Latitude</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th jhiSortBy="longitude"><span>Longitude</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th></th>
+                </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let station of stations ;trackBy: trackId">
-                <td><a [routerLink]="['/station', station.id, 'view' ]">{{station.id}}</a></td>
-                <td>{{station.name}}</td>
-                <td>{{station.address}}</td>
-                <td>{{station.latitude}}</td>
-                <td>{{station.longitude}}</td>
-                <td>
-                    <div *ngIf="station.cityId">
-                        <a [routerLink]="['../city', station.cityId , 'view' ]" >{{station.cityId}}</a>
-                    </div>
-                </td>
-                <td class="text-right">
-                    <div class="btn-group flex-btn-group-container">
-                        <button type="submit"
-                                [routerLink]="['/station', station.id, 'view' ]"
-                                class="btn btn-info btn-sm">
+                <tr *ngFor="let station of stations ;trackBy: trackId">
+                    <td>{{station.name}}</td>
+                    <td>
+                        <div *ngIf="station.city">
+                            <a [routerLink]="['../city', station.cityId , 'view' ]">{{station.city.name}}</a>
+                        </div>
+                    </td>
+                    <td>{{station.address}}</td>
+                    <td>{{station.latitude}}</td>
+                    <td>{{station.longitude}}</td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit" [routerLink]="['/station', station.id, 'view' ]" class="btn btn-info btn-sm">
                             <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline">View</span>
                         </button>
-                        <button type="submit"
-                                [routerLink]="['/station', station.id, 'edit']"
-                                class="btn btn-primary btn-sm">
+                            <button type="submit" [routerLink]="['/station', station.id, 'edit']" class="btn btn-primary btn-sm">
                             <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline">Edit</span>
                         </button>
-                        <button type="submit"
-                                [routerLink]="['/', 'station', { outlets: { popup: station.id + '/delete'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm">
+                            <button type="submit" (click)="openDeletePopup(station.id)" class="btn btn-danger btn-sm">
                             <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline">Delete</span>
                         </button>
-                    </div>
-                </td>
-            </tr>
+                        </div>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

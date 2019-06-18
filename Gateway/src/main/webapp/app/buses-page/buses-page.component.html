@@ -1,4 +1,14 @@
-<div>
+<div *ngIf="loading || waitingForOptimal" class="loading">
+    <span *ngIf="loading" class="loading">
+        Loading data
+    </span>
+    <span *ngIf="waitingForOptimal" class="loading">
+        Trying to find best routes
+    </span>
+    <mat-progress-spinner mode="indeterminate" value="50" class="loading"></mat-progress-spinner>
+</div>
+
+<div *ngIf="!loading && !waitingForOptimal">
     <div class="title">
         <h4 class="font-weight-bold">Transport from {{data.route.from.city.name}} to {{data.route.to.city.name}}</h4>
     </div>
@@ -39,24 +49,25 @@
 
                             <div class="bus-details">
                                 <div class="travel-mode">
-                                    <div>
-                                        <mat-icon [inline]="true" class="travel-mode-icon">directions_bus</mat-icon>
+                                    <div class="travel-mode-icon">
+                                        <mat-icon [inline]="true">directions_bus</mat-icon>
                                     </div>
                                     <div class="travel-mode-details">
                                         <p class="travel-mode-name">Bus</p>
+                                        <p>{{convertToHummanReadable(route.duration.text)}}</p>
                                     </div>
                                 </div>
 
                                 <div>
                                     <p class="price" *ngIf="route.price">Price: <b>{{route.price}} LEI</b></p>
-                                    <span>Empty seats: <b>{{route.total_places - loadOccupiedSeats(route.bus_id)}}/{{route.total_places}}</b></span>
+                                    <span>Empty seats: <b>{{route.empty_seats}}/{{route.total_places}}</b></span>
                                 </div>
 
                                 <a (click)="showBusStops = !showBusStops" [hidden]="showBusStops || route.steps.length == 0">Show intermediate stops</a>
                                 <a (click)="showBusStops = !showBusStops" [hidden]="!showBusStops || route.steps.length == 0">Hide intermediate stops</a>
                                 <div class="bus-stops" [hidden]="!showBusStops">
                                     <div *ngFor="let step of route.steps">
-                                        <div *ngIf="step.end_location.id != route.end_location.id">
+                                        <div *ngIf="step.end_location.id != route.end_location.id && step.end_location.id != route.start_location.id">
                                             <fa-icon icon="circle" class="fa-sm color-purple bus-stop-icon"></fa-icon>
                                             <span class="location">{{step.end_location.name}}, {{step.end_location.city.name}} <span class="time">{{step.arrival_time.text}}</span></span>
                                         </div>
@@ -70,6 +81,9 @@
                                 </div>
                             </div>
 
+                            <div class="walk-details" *ngIf="route.wait_time">
+                                <p>Wait {{convertToHummanReadable(route.wait_time.text)}}</p>
+                            </div>
                         </div>
 
                         <div *ngSwitchCase="'EXTERNAL'">
@@ -81,19 +95,19 @@
 
                             <div *ngFor="let step of route.steps" [ngSwitch]="step.travel_mode">
                                 <div *ngSwitchCase="'WALKING'" class="walk-details">
-                                    <p [innerHTML]="step.html_instructions"></p>
+                                    <p [innerHTML]="step.html_instructions" class="step-title"></p>
 
                                     <div class="travel-mode">
                                         <div>
                                             <fa-icon icon="walking" class="fa-2x"></fa-icon>
                                         </div>
                                         <div>
-                                            <p>{{step.distance.text}}</p>
-                                            <p>{{step.duration.text}}</p>
+                                            <p>Walk</p>
+                                            <p>About {{convertToHummanReadable(step.duration.text)}}</p>
                                         </div>
                                     </div>
-                                    <p>Walk informations:</p>
-                                    <p *ngFor="let walk of step.steps" [innerHTML]="walk.html_instructions"></p>
+                                    <!-- <p>Walk informations:</p>
+                                    <p *ngFor="let walk of step.steps" [innerHTML]="walk.html_instructions"></p> -->
                                     <p class="add-padding"></p>
                                 </div>
 
@@ -105,23 +119,28 @@
                                     </div>
 
                                     <div class="bus-details">
-                                        <span [innerHTML]="step.html_instructions"></span>
-                                        <span> - {{step.transit_details.line.agencies[0].name}}</span><br>
+                                        <span [innerHTML]="step.html_instructions" class="step-title"></span>
+                                        <span class="font-weight-bold"> - {{step.transit_details.line.agencies[0].name}}</span><br>
                                         <a [href]="step.transit_details.line.agencies[0].url">{{step.transit_details.line.agencies[0].url}}</a>
                                         <div class="travel-mode">
                                             <div><img [src]="step.transit_details.line.vehicle.icon"></div>
                                             <div>
-                                                <p>{{step.distance.text}}</p>
-                                                <p>{{step.duration.text}}</p>
+                                                <p>{{step.transit_details.line.vehicle.name}}</p>
+                                                <p>{{convertToHummanReadable(step.duration.text)}} ({{step.transit_details.num_stops}} stops)</p>
                                             </div>
                                         </div>
                                         <p>For more details: {{step.transit_details.line.agencies[0].phone}}</p>
+                                        <small class="form-text text-danger" *ngIf="step.price === undefined">Price is not available</small>
                                     </div>
 
                                     <div>
                                         <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
                                         <div class="location end"><span>{{step.transit_details.arrival_stop.name}} <span class="time">{{step.transit_details.arrival_time.text}}</span></span>
                                         </div>
+                                    </div>
+
+                                    <div class="walk-details" *ngIf="step.wait_time">
+                                        <p>Wait {{convertToHummanReadable(step.wait_time.text)}}</p>
                                     </div>
                                 </div>
                             </div>
@@ -133,41 +152,11 @@
                             </div>
                         </div>
 
-                        <!-- <div class="details">
-                            <div class="travel-mode">
-                                <div class="travel-mode-icon">
-                                    <mat-icon [inline]="true">directions_bus</mat-icon>
-                                    <fa-icon icon="walking"></fa-icon>
-                                </div>
-                                <div class="travel-mode-details">
-                                    <p class="travel-mode-name">{{route}}</p>
-                                </div>
-                            </div>
-                            <div>
-                                <p class="price">Price: <b>{{selectedBus.bus.price}} LEI</b></p>
-                                <span>Empty seats: <b>{{selectedBus.remainingSeats}}/{{selectedBus.bus.totalPlaces}}</b></span>
-                            </div>
-
-                            <a (click)="showBusStops = !showBusStops" [hidden]="showBusStops">Show intermediate stops</a>
-                            <a (click)="showBusStops = !showBusStops" [hidden]="!showBusStops">Hide intermediate stops</a>
-                            <div class="bus-stops" [hidden]="!showBusStops">
-                                <div *ngFor="let stop of getStopsForCurrentBus()">
-                                    <fa-icon icon="circle" class="fa-sm color-purple bus-stop-icon"></fa-icon>
-                                    <span class="location">{{getStationById(stop.station).name}}, {{getCityByStation(stop.station).name}} <span class="time">{{stop.arrivalTime}}</span></span>
-                                </div>
-                            </div>
-
-                        </div> -->
-                        <!-- <div>
-                            <fa-icon icon="dot-circle" class="fa-lg color-purple"></fa-icon>
-                            <div class="location end"><span>{{selectedBus.end.name}}, {{endLocation}} <span class="time">{{selectedBus.bus.arrivalTime}}</span></span>
-                            </div>
-                        </div> -->
                     </div>
                 </div>
             </div>
 
-            <div class="mapbox" id="mapbox" [hidden]="!showMapView"></div>
+            <div #googlemap class="googlemap" [hidden]="!showMapView"></div>
 
             <div>
                 <div class="all-data">
@@ -196,9 +185,16 @@
         <div class="clearfix"></div>
     </div>
 
-    <div *ngIf="optimalRoutes.length === 0 && !initializing" class="row justify-content-center">
+    <div *ngIf="optimalRoutes.length === 0 && !waitingForOptimal && !loading" class="row justify-content-center">
         <div class="col-11 col-md-9">
             <h3>No routes found.</h3>
+            <button type="submit" id="back-button" class="btn btn-primary" (click)="toMain()">Return to main</button>
+        </div>
+    </div>
+
+    <div *ngIf="error" class="row justify-content-center">
+        <div class="col-11 col-md-9">
+            <h3>Something went wrong! Try again later!</h3>
             <button type="submit" id="back-button" class="btn btn-primary" (click)="toMain()">Return to main</button>
         </div>
     </div>

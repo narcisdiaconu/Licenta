@@ -1,6 +1,7 @@
 from flask import Flask, request, Response
 import json
 import argparse
+from decorator import crossdomain
 import algorithm
 import utils
 import os
@@ -9,6 +10,7 @@ app = Flask(__name__)
 app.debug = True
 
 @app.route("/", methods=['POST', 'OPTIONS'])
+@crossdomain(origin='*', methods="POST, OPTIONS")
 def get_routes():
 	data = request.get_json()
 	if data is None:
@@ -20,15 +22,22 @@ def get_routes():
 	for route in response:
 		new_route = dict()
 		new_route['summary'] = utils.extract_summary(route, index)
-		new_route['route'] = route
+		new_route['route'] = utils.add_waitings(route)
 		res.append(new_route)
 		index += 1
 	
 	res = utils.order_result(res)
+	
+	file = open('mock-result.json', 'w')
+	file.write(json.dumps(res))
+	file.close()
+	# file = open('mock-result.json', 'r')
+	# res = json.load(file)
+	# file.close()
 	return Response(json.dumps(res), status=200, mimetype="application/json")
 
 if __name__ == '__main__':
-
+	
 	parser = argparse.ArgumentParser()
 	parser.add_argument(
 		'--port',

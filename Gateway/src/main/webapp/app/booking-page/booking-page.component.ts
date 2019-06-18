@@ -6,9 +6,14 @@ import { IUserdetails, Userdetails } from 'app/shared/model/users/userdetails.mo
 import { UserdetailsService } from 'app/entities/users/userdetails';
 import { AccountService } from 'app/core';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { IBus } from 'app/shared/model/buses/bus.model';
-import { BusModel } from 'app/models/bus';
 import { TicketService } from 'app/entities/tickets/ticket';
+import { ITicket, Ticket } from 'app/shared/model/tickets/ticket.model';
+import moment = require('moment');
+import { RouteService } from 'app/entities/routes/route';
+import { BusStopService } from 'app/entities/buses/bus-stop';
+import { IRoute } from 'app/shared/model/routes/route.model';
+import { IBusStop } from 'app/shared/model/buses/bus-stop.model';
+import { ConfirmationModalService } from './confirmation-modal.service';
 
 @Component({
     selector: 'jhi-booking',
@@ -23,6 +28,9 @@ export class BookingPageComponent implements OnInit {
     ticketsNumber = 0;
     totalPrice = 0;
     paymentMethods: any[];
+    private createdTickets: ITicket[];
+    bookingDone = false;
+    bookingFailed = false;
 
     constructor(
         private dataService: DataService,
@@ -30,7 +38,10 @@ export class BookingPageComponent implements OnInit {
         private location: Location,
         private userDetailsService: UserdetailsService,
         private accountService: AccountService,
-        private ticketService: TicketService
+        private ticketService: TicketService,
+        private routeService: RouteService,
+        private busStopService: BusStopService,
+        private confirmationModalService: ConfirmationModalService
     ) {}
 
     ngOnInit(): void {
@@ -62,8 +73,16 @@ export class BookingPageComponent implements OnInit {
 
     private loadPlacesLeft(): void {
         this.buses.forEach(bus => {
-            this.ticketService.ocupiedSeats(bus).subscribe((res: HttpResponse<number>) => {
-                bus.remaining_seats = bus.total_places - res.body;
+            this.routeService.find(bus.bus_id).subscribe((r: HttpResponse<IRoute>) => {
+                this.busStopService.getByBus(bus.bus_id).subscribe((stops: HttpResponse<IBusStop[]>) => {
+                    const points = [];
+                    points.push(r.body.startStation);
+                    stops.body.forEach(s => points.push(s.station));
+                    points.push(r.body.endStation);
+                    this.ticketService.ocupiedSeats(bus, points).subscribe((value: HttpResponse<number>) => {
+                        bus.remaining_seats = bus.total_places - value.body;
+                    });
+                });
             });
         });
     }
@@ -73,11 +92,51 @@ export class BookingPageComponent implements OnInit {
     }
 
     convertDateToString(busDate): string {
-        const date = new Date(busDate);
+        const date = new Date(busDate * 1000);
         return new Date(date).toDateString();
     }
 
-    book(): void {}
+    book(): void {
+        this.createdTickets = [];
+        this.buses.forEach(bus => {
+            const ticket = new Ticket(
+                null,
+                this.userDetails.id,
+                bus.bus_id,
+                moment(new Date(bus.departure_time.value * 1000)),
+                this.ticketsNumber,
+                this.totalPrice,
+                false,
+                bus.start_location.id,
+                bus.end_location.id
+            );
+            this.ticketService.create(ticket).subscribe(
+                (res: HttpResponse<ITicket>) => {
+                    this.createdTickets.push(res.body);
+                    if (this.createdTickets.length === this.buses.length) {
+                        this.validateBooking();
+                    }
+                },
+                (res: HttpErrorResponse) => {
+                    console.log(res);
+                    this.bookingFailed = true;
+                    this.resetTickets();
+                }
+            );
+        });
+    }
+
+    private resetTickets() {
+        this.createdTickets.forEach(ticket => {
+            this.ticketService.delete(ticket.id);
+        });
+    }
+
+    private validateBooking() {
+        this.bookingDone = true;
+        this.bookingFailed = false;
+        this.confirmationModalService.open();
+    }
 
     increaseTicketsNumber(): void {
         if (this.ticketsNumber < this.buses[0].remaining_seats) {

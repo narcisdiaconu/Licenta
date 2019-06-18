@@ -1,0 +1,46 @@
+<div>
+    <h2 id="page-heading">
+        <span>Your tickets</span>
+    </h2>
+    <div class="table-responsive" *ngIf="tickets">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th><span>From</span></th>
+                    <th><span>To</span></th>
+                    <th><span>Bus</span></th>
+                    <th><span>Date</span></th>
+                    <th><span>Places</span></th>
+                    <th><span>Price</span></th>
+                    <th><span>Paid</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let ticket of tickets">
+                    <td *ngIf="ticket.startLocation !== undefined">{{ticket.startLocation.name}}</td>
+                    <td *ngIf="ticket.endLocation !== undefined">{{ticket.endLocation.name}}</td>
+                    <td *ngIf="ticket.startLocation === undefined">{{ticket.startStation}}</td>
+                    <td *ngIf="ticket.endLocation === undefined">{{ticket.endStation}}</td>
+                    <td>{{ticket.bus}}</td>
+                    <td>{{ticket.date | date:'mediumDate'}}</td>
+                    <td>{{ticket.places}}</td>
+                    <td>{{ticket.price}}</td>
+                    <td>{{ticket.paid}}</td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit" [routerLink]="['/ticket', ticket.id, 'edit']" class="btn btn-danger btn-sm">
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                            <span class="d-none d-md-inline">Cancel</span>
+                        </button>
+                            <button type="submit" [routerLink]="['/', 'ticket', { outlets: { popup: ticket.id + '/delete'} }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm">
+                            <fa-icon [icon]="'times'"></fa-icon>
+                            <span class="d-none d-md-inline">Delete</span>
+                        </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

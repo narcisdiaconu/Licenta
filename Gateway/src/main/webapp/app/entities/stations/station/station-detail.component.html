@@ -1,7 +1,7 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <div *ngIf="station">
-            <h2><span>Station</span> {{station.id}}</h2>
+            <h2><span>Station</span> {{station.name}}</h2>
             <hr>
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
@@ -23,21 +23,17 @@
                 </dd>
                 <dt><span>City</span></dt>
                 <dd>
-                    <div *ngIf="station.cityId">
-                        <a [routerLink]="['/city', station.cityId, 'view']">{{station.cityId}}</a>
+                    <div *ngIf="station.city">
+                        <a [routerLink]="['/city', station.cityId, 'view']">{{station.city.name}}</a>
                     </div>
                 </dd>
             </dl>
 
-            <button type="submit"
-                    (click)="previousState()"
-                    class="btn btn-info">
+            <button type="submit" (click)="previousState()" class="btn btn-info">
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span> Back</span>
             </button>
 
-            <button type="button"
-                    [routerLink]="['/station', station.id, 'edit']"
-                    class="btn btn-primary">
+            <button type="button" [routerLink]="['/station', station.id, 'edit']" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span> Edit</span>
             </button>
         </div>

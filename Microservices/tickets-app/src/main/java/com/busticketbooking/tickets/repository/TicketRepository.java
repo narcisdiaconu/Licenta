@@ -15,4 +15,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByBusAndDate(Long bus, LocalDate date);
+    List<Ticket> findByUser(Long user);
 }

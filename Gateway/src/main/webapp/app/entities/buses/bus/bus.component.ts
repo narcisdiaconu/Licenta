@@ -10,6 +10,10 @@ import { AccountService } from 'app/core';
 
 import { ITEMS_PER_PAGE } from 'app/shared';
 import { BusService } from './bus.service';
+import { RouteService } from 'app/entities/routes/route';
+import { IRoute } from 'app/shared/model/routes/route.model';
+import { NgbModalRef, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { BusDeleteDialogComponent } from './bus-delete-dialog.component';
 
 @Component({
     selector: 'jhi-bus',
@@ -29,6 +33,7 @@ export class BusComponent implements OnInit, OnDestroy {
     predicate: any;
     previousPage: any;
     reverse: any;
+    private ngbModalRef: NgbModalRef;
 
     constructor(
         protected busService: BusService,
@@ -37,7 +42,9 @@ export class BusComponent implements OnInit, OnDestroy {
         protected accountService: AccountService,
         protected activatedRoute: ActivatedRoute,
         protected router: Router,
-        protected eventManager: JhiEventManager
+        protected eventManager: JhiEventManager,
+        private routeService: RouteService,
+        private modalService: NgbModal
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
         this.routeData = this.activatedRoute.data.subscribe(data => {
@@ -100,7 +107,9 @@ export class BusComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
+        if (this.eventSubscriber) {
+            this.eventManager.destroy(this.eventSubscriber);
+        }
     }
 
     trackId(index: number, item: IBus) {
@@ -119,10 +128,32 @@ export class BusComponent implements OnInit, OnDestroy {
         return result;
     }
 
+    openDeletePopup(id: number) {
+        setTimeout(() => {
+            this.ngbModalRef = this.modalService.open(BusDeleteDialogComponent as Component, { size: 'lg', backdrop: 'static' });
+            this.ngbModalRef.componentInstance.id = id;
+            this.ngbModalRef.result.then(
+                result => {
+                    this.router.navigate(['/bus']);
+                    this.ngbModalRef = null;
+                },
+                reason => {
+                    this.router.navigate(['/bus']);
+                    this.ngbModalRef = null;
+                }
+            );
+        }, 0);
+    }
+
     protected paginateBuses(data: IBus[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
         this.buses = data;
+        this.buses.forEach(bus => this.loadRoute(bus));
+    }
+
+    private loadRoute(bus: IBus) {
+        this.routeService.find(bus.route).subscribe((res: HttpResponse<IRoute>) => (bus.routeModel = res.body));
     }
 
     protected onError(errorMessage: string) {

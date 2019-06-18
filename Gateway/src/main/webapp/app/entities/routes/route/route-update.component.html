@@ -4,56 +4,42 @@
             <h2 id="jhi-route-heading">Create or edit a Route</h2>
             <div>
                 <jhi-alert-error></jhi-alert-error>
-                <div class="form-group" [hidden]="!route.id">
-                    <label for="id">ID</label>
-                    <input type="text" class="form-control" id="id" name="id"
-                        [(ngModel)]="route.id" readonly />
-                </div>
                 <div class="form-group">
                     <label class="form-control-label" for="field_title">Title</label>
-                    <input type="text" class="form-control" name="title" id="field_title"
-                        [(ngModel)]="route.title" required/>
+                    <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="route.title" required/>
                     <div [hidden]="!(editForm.controls.title?.dirty && editForm.controls.title?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.title?.errors?.required">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.title?.errors?.required">
                         This field is required.
                         </small>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" for="field_startStation">Start Station</label>
-                    <input type="number" class="form-control" name="startStation" id="field_startStation"
-                        [(ngModel)]="route.startStation" required/>
-                    <div [hidden]="!(editForm.controls.startStation?.dirty && editForm.controls.startStation?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.startStation?.errors?.required">
-                        This field is required.
-                        </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.startStation?.errors?.number">
-                            This field should be a number.
-                        </small>
-                    </div>
+                    <select class="form-control" id="field_start_station" name="startStation" [(ngModel)]="route.startStation" required>
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="stationOption.id" *ngFor="let stationOption of stations; trackBy: trackStationById">{{stationOption.name}}</option>
+                    </select>
                 </div>
+                <label class="form-control-label">Stops</label>
+                <div class="form-group" *ngFor="let ip of intermediatePoints">
+                    <select class="form-control" [id]="ip.index" [name]="ip.index" [(ngModel)]="ip.station" required>
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="stationOption.id" *ngFor="let stationOption of stations; trackBy: trackStationById">{{stationOption.name}}</option>
+                    </select>
+                    <button class="btn btn-danger" (click)="removeIntermediatePoint(ip)"><fa-icon icon="trash-alt"></fa-icon> </button>
+                </div>
+                <p><a (click)="addIntermediatePoint()">+ create a new stop</a></p>
                 <div class="form-group">
                     <label class="form-control-label" for="field_endStation">End Station</label>
-                    <input type="number" class="form-control" name="endStation" id="field_endStation"
-                        [(ngModel)]="route.endStation" required/>
-                    <div [hidden]="!(editForm.controls.endStation?.dirty && editForm.controls.endStation?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.endStation?.errors?.required">
-                        This field is required.
-                        </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.endStation?.errors?.number">
-                            This field should be a number.
-                        </small>
-                    </div>
+                    <select class="form-control" id="field_end_station" name="endStation" [(ngModel)]="route.endStation" required>
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="stationOption.id" *ngFor="let stationOption of stations; trackBy: trackStationById">{{stationOption.name}}</option>
+                    </select>
                 </div>
 
             </div>
             <div>
-                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span>Cancel</span>
                 </button>
                 <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">

@@ -4,105 +4,106 @@
             <h2 id="jhi-bus-heading">Create or edit a Bus</h2>
             <div>
                 <jhi-alert-error></jhi-alert-error>
-                <div class="form-group" [hidden]="!bus.id">
-                    <label for="id">ID</label>
-                    <input type="text" class="form-control" id="id" name="id"
-                        [(ngModel)]="bus.id" readonly />
-                </div>
                 <div class="form-group">
                     <label class="form-control-label" for="field_route">Route</label>
-                    <input type="number" class="form-control" name="route" id="field_route"
-                        [(ngModel)]="bus.route" required/>
+                    <select class="form-control" id="field_route" name="route" [(ngModel)]="bus.route" (change)="updateStops($event)" required>
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="routeOption.id" *ngFor="let routeOption of routes; trackBy: trackRouteById">{{routeOption.title}}</option>
+                    </select>
+
                     <div [hidden]="!(editForm.controls.route?.dirty && editForm.controls.route?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.route?.errors?.required">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.route?.errors?.required">
                         This field is required.
-                        </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.route?.errors?.number">
-                            This field should be a number.
                         </small>
                     </div>
                 </div>
+
+                <div class="form-group" *ngIf="bus.routeModel">
+                    <label class="form-control-label" name="start" *ngIf="bus.routeModel.startLocation">{{bus.routeModel.startLocation.name}}</label>
+                    <input type="text" class="form-control col-3" name="departureTime" id="field_departureTime" [(ngModel)]="bus.departureTime" required pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$" placeholder="Departure time" />
+                    <div [hidden]="!(editForm.controls.departureTime?.dirty && editForm.controls.departureTime?.invalid)">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.departureTime?.errors?.required">
+                        This field is required.
+                        </small>
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.departureTime?.errors?.pattern">
+                            This field should follow "hh:mm" format.
+                        </small>
+                    </div>
+                </div>
+
+                <label class="form-control-label">Steps</label>
+                <div class="form-group" *ngFor="let stop of busStops">
+                    <label class="form-control-label col-6" [id]="stop.station" *ngIf="stop.stationModel">{{stop.stationModel.name}}</label>
+
+                    <div class="form-row">
+                        <div class="form-group col-3">
+                            <label class="form-control-label">Arrival time</label>
+                            <input type="text" class="form-control" [name]="stop.station + 'dep'" [id]="stop.station + 'dep'" [(ngModel)]="stop.arrivalTime" required pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$" placeholder="Arrival time" />
+                        </div>
+                        <div class="form-group col-3">
+                            <label class="form-control-label">Departure time</label>
+                            <input type="text" class="form-control" [name]="stop.station + 'arr'" [id]="stop.station + 'arr'" [(ngModel)]="stop.departureTime" required pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$" placeholder="Departure time" />
+                        </div>
+                        <div class="form-group col-3">
+                            <label class="form-control-label">Price</label>
+                            <input type="number" class="form-control" [name]="stop.station + 'price'" [id]="stop.station + 'price'" [(ngModel)]="stop.price" required min="0" jhiMin="0" placeholder="Price from start" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" *ngIf="bus.routeModel">
+                    <label class="form-control-label" name="end" *ngIf="bus.routeModel.endLocation">{{bus.routeModel.endLocation.name}}</label>
+                    <input type="text" class="form-control col-3" name="arrivalTime" id="field_arrivalTime" [(ngModel)]="bus.arrivalTime" required pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$" placeholder="Arrival time" />
+                    <div [hidden]="!(editForm.controls.arrivalTime?.dirty && editForm.controls.arrivalTime?.invalid)">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.arrivalTime?.errors?.required">
+                            This field is required.
+                        </small>
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.arrivalTime?.errors?.pattern">
+                            This field should follow "hh:mm" format.
+                        </small>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-control-label" for="field_price">Price</label>
-                    <input type="number" class="form-control" name="price" id="field_price"
-                        [(ngModel)]="bus.price" required min="0" jhiMin="0"/>
+                    <input type="number" class="form-control" name="price" id="field_price" [(ngModel)]="bus.price" required min="0" jhiMin="0" />
                     <div [hidden]="!(editForm.controls.price?.dirty && editForm.controls.price?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.price?.errors?.required">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.price?.errors?.required">
                         This field is required.
                         </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.price?.errors?.min">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.price?.errors?.min">
                             This field should be at least 0.
                         </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.price?.errors?.number">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.price?.errors?.number">
                             This field should be a number.
                         </small>
                     </div>
                 </div>
+
                 <div class="form-group">
                     <label class="form-control-label" for="field_totalPlaces">Total Places</label>
-                    <input type="number" class="form-control" name="totalPlaces" id="field_totalPlaces"
-                        [(ngModel)]="bus.totalPlaces" required min="0" jhiMin="0"/>
+                    <input type="number" class="form-control" name="totalPlaces" id="field_totalPlaces" [(ngModel)]="bus.totalPlaces" required min="0" jhiMin="0" />
                     <div [hidden]="!(editForm.controls.totalPlaces?.dirty && editForm.controls.totalPlaces?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.totalPlaces?.errors?.required">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.totalPlaces?.errors?.required">
                         This field is required.
                         </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.totalPlaces?.errors?.min">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.totalPlaces?.errors?.min">
                             This field should be at least 0.
                         </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.totalPlaces?.errors?.number">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.totalPlaces?.errors?.number">
                             This field should be a number.
                         </small>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-control-label" for="field_departureTime">Departure Time</label>
-                    <input type="text" class="form-control" name="departureTime" id="field_departureTime"
-                        [(ngModel)]="bus.departureTime" required pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$"/>
-                    <div [hidden]="!(editForm.controls.departureTime?.dirty && editForm.controls.departureTime?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.departureTime?.errors?.required">
-                        This field is required.
-                        </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.departureTime?.errors?.pattern">
-                            This field should follow pattern for "Departure Time".
-                        </small>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" for="field_arrivalTime">Arrival Time</label>
-                    <input type="text" class="form-control" name="arrivalTime" id="field_arrivalTime"
-                        [(ngModel)]="bus.arrivalTime" required pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$"/>
-                    <div [hidden]="!(editForm.controls.arrivalTime?.dirty && editForm.controls.arrivalTime?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.arrivalTime?.errors?.required">
-                        This field is required.
-                        </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.arrivalTime?.errors?.pattern">
-                            This field should follow pattern for "Arrival Time".
-                        </small>
-                    </div>
-                </div>
+
                 <div class="form-group">
                     <label class="form-control-label" for="field_days">Days</label>
-                    <input type="text" class="form-control" name="days" id="field_days"
-                        [(ngModel)]="bus.days" required pattern="^[01]{7}$"/>
+                    <input type="text" class="form-control" name="days" id="field_days" [(ngModel)]="bus.days" required pattern="^[01]{7}$" />
                     <div [hidden]="!(editForm.controls.days?.dirty && editForm.controls.days?.invalid)">
-                        <small class="form-text text-danger"
-                        [hidden]="!editForm.controls.days?.errors?.required">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.days?.errors?.required">
                         This field is required.
                         </small>
-                        <small class="form-text text-danger"
-                            [hidden]="!editForm.controls.days?.errors?.pattern">
+                        <small class="form-text text-danger" [hidden]="!editForm.controls.days?.errors?.pattern">
                             This field should follow pattern for "Days".
                         </small>
                     </div>
@@ -110,7 +111,7 @@
 
             </div>
             <div>
-                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span>Cancel</span>
                 </button>
                 <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">

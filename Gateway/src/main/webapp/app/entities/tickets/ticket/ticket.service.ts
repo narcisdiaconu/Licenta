@@ -51,8 +51,8 @@ export class TicketService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    ocupiedSeats(req): Observable<HttpResponse<number>> {
-        const convertedData = this.convertBusToOcupiedSeat(req);
+    ocupiedSeats(req, stops): Observable<HttpResponse<number>> {
+        const convertedData = this.convertBusToOcupiedSeat(req, stops);
         let convert: ITicket = { date: convertedData.date };
         convert = this.convertDateFromClient(convert);
         convertedData.date = convert.date;
@@ -60,17 +60,14 @@ export class TicketService {
         return this.http.post<number>(`${this.resourceUrl}/ocupied-seats`, convertedData, { observe: 'response' });
     }
 
-    private convertBusToOcupiedSeat(bus): IOcupiedSeats {
-        const stops = [];
-        stops.push(bus.start_location.id);
-        bus.steps.forEach(step => {
-            stops.push(step.end_location.id);
-        });
-        if (bus.steps.length === 0) {
-            stops.push(bus.end_location.id);
-        }
+    getForUser(user: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<ITicket[]>(`${this.resourceUrl}/user/${user}`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
 
-        const busDate = new Date(bus.departure_time.value);
+    private convertBusToOcupiedSeat(bus, stops): IOcupiedSeats {
+        const busDate = new Date(bus.departure_time.value * 1000);
         const data: IOcupiedSeats = new OcupiedSeats(bus.bus_id, stops, moment(busDate), bus.start_location.id, bus.end_location.id);
         return data;
     }

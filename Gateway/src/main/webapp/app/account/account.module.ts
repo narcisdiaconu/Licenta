@@ -12,6 +12,7 @@ import {
     PasswordResetFinishComponent,
     SettingsComponent,
     DetailsComponent,
+    MyTicketsComponent,
     accountState
 } from './';
 
@@ -25,6 +26,7 @@ import {
         PasswordResetInitComponent,
         PasswordResetFinishComponent,
         SettingsComponent,
+        MyTicketsComponent,
         DetailsComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]

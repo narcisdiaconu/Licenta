@@ -10,7 +10,6 @@ import { StationService } from './station.service';
 import { StationComponent } from './station.component';
 import { StationDetailComponent } from './station-detail.component';
 import { StationUpdateComponent } from './station-update.component';
-import { StationDeletePopupComponent } from './station-delete-dialog.component';
 import { IStation } from 'app/shared/model/stations/station.model';
 
 @Injectable({ providedIn: 'root' })
@@ -78,21 +77,5 @@ export const stationRoute: Routes = [
             pageTitle: 'Stations'
         },
         canActivate: [UserRouteAccessService]
-    }
-];
-
-export const stationPopupRoute: Routes = [
-    {
-        path: ':id/delete',
-        component: StationDeletePopupComponent,
-        resolve: {
-            station: StationResolve
-        },
-        data: {
-            authorities: ['ROLE_ADMIN'],
-            pageTitle: 'Stations'
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup'
     }
 ];

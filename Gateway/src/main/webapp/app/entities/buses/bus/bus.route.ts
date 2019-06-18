@@ -10,7 +10,6 @@ import { BusService } from './bus.service';
 import { BusComponent } from './bus.component';
 import { BusDetailComponent } from './bus-detail.component';
 import { BusUpdateComponent } from './bus-update.component';
-import { BusDeletePopupComponent } from './bus-delete-dialog.component';
 import { IBus } from 'app/shared/model/buses/bus.model';
 
 @Injectable({ providedIn: 'root' })
@@ -78,21 +77,5 @@ export const busRoute: Routes = [
             pageTitle: 'Buses'
         },
         canActivate: [UserRouteAccessService]
-    }
-];
-
-export const busPopupRoute: Routes = [
-    {
-        path: ':id/delete',
-        component: BusDeletePopupComponent,
-        resolve: {
-            bus: BusResolve
-        },
-        data: {
-            authorities: ['ROLE_ADMIN'],
-            pageTitle: 'Buses'
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup'
     }
 ];

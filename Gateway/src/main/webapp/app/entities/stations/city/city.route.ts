@@ -10,7 +10,6 @@ import { CityService } from './city.service';
 import { CityComponent } from './city.component';
 import { CityDetailComponent } from './city-detail.component';
 import { CityUpdateComponent } from './city-update.component';
-import { CityDeletePopupComponent } from './city-delete-dialog.component';
 import { ICity } from 'app/shared/model/stations/city.model';
 
 @Injectable({ providedIn: 'root' })
@@ -78,21 +77,5 @@ export const cityRoute: Routes = [
             pageTitle: 'Cities'
         },
         canActivate: [UserRouteAccessService]
-    }
-];
-
-export const cityPopupRoute: Routes = [
-    {
-        path: ':id/delete',
-        component: CityDeletePopupComponent,
-        resolve: {
-            city: CityResolve
-        },
-        data: {
-            authorities: ['ROLE_ADMIN'],
-            pageTitle: 'Cities'
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup'
     }
 ];

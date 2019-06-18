@@ -10,6 +10,7 @@ def convert_given_data(data: dict):
 	for bus in data['buses']:
 		route = dict()
 		route['bus_id'] = bus['id']
+		route['route_id'] = bus['route']
 		route['type'] = 'INTERNAL'
 		route['arrival_time'] = convert_time_to_dict(bus['arrivalTime'])
 		route['departure_time'] = convert_time_to_dict(bus['departureTime'])
@@ -109,7 +110,7 @@ def retrieve_directions(start_location: dict, end_location: dict, departure_time
 	gmaps = googlemaps.Client(key=os.environ['GOOGLE_MAPS_KEY'])
 	start = str(start_location['latitude']) + ',' + str(start_location['longitude'])
 	end = str(end_location['latitude']) + ',' + str(end_location['longitude'])
-	directions = gmaps.directions(start, end, mode='transit', departure_time=departure_time)
+	directions = gmaps.directions(start, end, mode='transit', departure_time=departure_time, alternatives=True)
 	result = []
 	for res in directions:
 		leg = convert_leg(res['legs'][0])
@@ -151,7 +152,7 @@ def convert_transit_details(details: dict):
 	result['arrival_stop'] = convert_location(details['arrival_stop']['location'])
 	result['arrival_stop']['name'] = details['arrival_stop']['name']
 	result['departure_stop'] = convert_location(details['departure_stop']['location'])
-	result['departure_stop']['name'] = details['arrival_stop']['name']
+	result['departure_stop']['name'] = details['departure_stop']['name']
 	result['arrival_time']['text'] = convert_from_12_to_24(details['arrival_time']['text'])
 	result['departure_time']['text'] = convert_from_12_to_24(details['departure_time']['text'])
 	return result
@@ -258,6 +259,35 @@ def extract_summary(route, index):
 
 	return result
 
+def add_waitings(route):
+	for i in range(len(route) - 1):
+		if route[i]['type'] == 'INTERNAL':
+			if route[i+1]['type'] == 'INTERNAL':
+				route[i]['wait_time'] = get_wait_time(route[i], route[i+1])
+			elif route[i+1]['type'] == 'EXTERNAL':
+				route[i]['wait_time'] = get_wait_time(route[i], route[i+1]['departure_time'])
+		else:
+			if route[i]['steps'][-1]['travel_mode'] == 'TRANSIT':
+				if route[i+1]['type'] == 'INTERNAL':
+					route[i]['steps'][-1]['wait_time'] = get_wait_time(route[i]['steps'][-1]['transit_details'], route[i+1])
+			elif route[i+1]['type'] == 'EXTERNAL':
+				if route[i+1]['steps'][0]['travel_mode'] == 'TRANSIT':
+					route[i]['steps'][-1]['wait_time'] = get_wait_time(route[i]['steps'][-1]['transit_details'], route[i+1]['steps'][0]['transit_details'])
+			for j in range(len(route[i]['steps']) - 1):
+				if route[i]['steps'][j]['travel_mode'] == 'TRANSIT' and route[i]['steps'][j+1]['travel_mode'] == 'TRANSIT':
+					route[i]['steps'][j]['wait_time'] = get_wait_time(route[i]['steps'][j]['transit_details'], route[i]['steps'][j+1]['transit_details'])
+	if route[-1]['type'] == 'EXTERNAL':
+		for j in range(len(route[-1]['steps']) - 1):
+			if route[-1]['steps'][j]['travel_mode'] == 'TRANSIT' and route[-1]['steps'][j+1]['travel_mode'] == 'TRANSIT':
+				route[-1]['steps'][j]['wait_time'] = get_wait_time(route[-1]['steps'][j]['transit_details'], route[-1]['steps'][j+1]['transit_details'])
+	return route
+
+def get_wait_time(start, end):
+	wait_time = dict()
+	wait_time['value'] = end['departure_time']['value'] - start['arrival_time']['value']
+	wait_time['text'] = convert_seconds_to_hour_minute_format(wait_time['value'])
+	return wait_time
+
 def create_datetime_from_date_and_string(date, time):
 	return datetime.datetime(date.year, date.month, date.day, int(time.split(":")[0]), int(time.split(":")[1]))
 
@@ -275,4 +305,50 @@ def convert_seconds_to_hour_minute_format(seconds):
 	return str(hours) + ':' + str(minutes)
 
 def order_result(result):
-	return sorted(result, key = lambda x: x['summary']['departure_time']['text'])
+	if (len(result) == 0):
+		return result
+	return sorted(result, key = lambda x: x['summary']['arrival_time']['value'])
+
+def update_route(route, current_time):
+	route['arrival_time']['value'] = round(create_datetime_from_date_and_string(current_time, route['arrival_time']['text']).timestamp())
+	route['duration'] = dict()
+	route['duration']['value'] = route['arrival_time']['value'] - route['departure_time']['value']
+	route['duration']['text'] = convert_seconds_to_hour_minute_format(route['duration']['value'])
+	return route
+
+def extract_subroute(route, start, end):
+	if route['start_location']['id'] == start['id'] and route['end_location']['id'] == end['id']:
+		return route
+
+	new_route = dict(route)
+	new_steps = []
+	add_steps = False
+	for step in route['steps']:
+		if step['start_location']['id'] == start['id']:
+			add_steps = True
+			new_route['start_location'] = step['start_location']
+			new_route['departure_time'] = step['departure_time']
+		if step['end_location']['id'] == end['id']:
+			if not start['id'] == step['start_location']['id']:
+				step.pop('price', None)
+			new_steps.append(step)
+			new_route['end_location'] = step['end_location']
+			new_route['arrival_time'] = step['arrival_time']
+			break
+		if add_steps:
+			if not start['id'] == step['start_location']['id']:
+				step.pop('price', None)
+			new_steps.append(step)
+	if len(new_steps) == 0:
+		return new_route
+	if not start['id'] == new_route['start_location']['id']:
+		new_route.pop('price', None)
+	else:
+		price = new_steps[-1].get('price', None)
+		if not price == None:
+			new_route['price'] = price
+	if len(new_steps) > 1:
+		new_route['steps'] = new_steps
+	else:
+		new_route['steps'] = []
+	return new_route

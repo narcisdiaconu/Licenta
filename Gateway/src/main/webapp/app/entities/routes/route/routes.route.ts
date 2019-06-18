@@ -10,7 +10,6 @@ import { RouteService } from './route.service';
 import { RouteComponent } from './route.component';
 import { RouteDetailComponent } from './route-detail.component';
 import { RouteUpdateComponent } from './route-update.component';
-import { RouteDeletePopupComponent } from './route-delete-dialog.component';
 import { IRoute } from 'app/shared/model/routes/route.model';
 
 @Injectable({ providedIn: 'root' })
@@ -78,21 +77,5 @@ export const routeRoute: Routes = [
             pageTitle: 'Routes'
         },
         canActivate: [UserRouteAccessService]
-    }
-];
-
-export const routePopupRoute: Routes = [
-    {
-        path: ':id/delete',
-        component: RouteDeletePopupComponent,
-        resolve: {
-            route: RouteResolve
-        },
-        data: {
-            authorities: ['ROLE_USER'],
-            pageTitle: 'Routes'
-        },
-        canActivate: [UserRouteAccessService],
-        outlet: 'popup'
     }
 ];

@@ -19,3 +19,5 @@ export * from './settings/settings.route';
 export * from './account.route';
 export * from './details/details.component';
 export * from './details/details.route';
+export * from './tickets/tickets.component';
+export * from './tickets/tickets.route';

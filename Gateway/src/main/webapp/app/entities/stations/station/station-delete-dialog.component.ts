@@ -1,10 +1,8 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component } from '@angular/core';
 
-import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { IStation } from 'app/shared/model/stations/station.model';
 import { StationService } from './station.service';
 
 @Component({
@@ -12,7 +10,7 @@ import { StationService } from './station.service';
     templateUrl: './station-delete-dialog.component.html'
 })
 export class StationDeleteDialogComponent {
-    station: IStation;
+    id: number;
 
     constructor(protected stationService: StationService, public activeModal: NgbActiveModal, protected eventManager: JhiEventManager) {}
 
@@ -28,38 +26,5 @@ export class StationDeleteDialogComponent {
             });
             this.activeModal.dismiss(true);
         });
-    }
-}
-
-@Component({
-    selector: 'jhi-station-delete-popup',
-    template: ''
-})
-export class StationDeletePopupComponent implements OnInit, OnDestroy {
-    protected ngbModalRef: NgbModalRef;
-
-    constructor(protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
-
-    ngOnInit() {
-        this.activatedRoute.data.subscribe(({ station }) => {
-            setTimeout(() => {
-                this.ngbModalRef = this.modalService.open(StationDeleteDialogComponent as Component, { size: 'lg', backdrop: 'static' });
-                this.ngbModalRef.componentInstance.station = station;
-                this.ngbModalRef.result.then(
-                    result => {
-                        this.router.navigate(['/station', { outlets: { popup: null } }]);
-                        this.ngbModalRef = null;
-                    },
-                    reason => {
-                        this.router.navigate(['/station', { outlets: { popup: null } }]);
-                        this.ngbModalRef = null;
-                    }
-                );
-            }, 0);
-        });
-    }
-
-    ngOnDestroy() {
-        this.ngbModalRef = null;
     }
 }

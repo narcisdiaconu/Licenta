@@ -1,33 +1,44 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <div *ngIf="route">
-            <h2><span>Route</span> {{route.id}}</h2>
+            <h2><span>Route</span> {{route.title}}</h2>
             <hr>
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
-                <dt><span>Title</span></dt>
+                <dt><span>Start Location</span></dt>
                 <dd>
-                    <span>{{route.title}}</span>
+                    <div *ngIf="route.startLocation">
+                        <span>{{route.startLocation.name}}</span>
+                    </div>
+                    <div *ngIf="!route.startLocation">
+                        <span>{{route.startStation}}</span>
+                    </div>
                 </dd>
-                <dt><span>Start Station</span></dt>
-                <dd>
-                    <span>{{route.startStation}}</span>
+                <dt *ngIf="route.intermediatePoints"><span>Stops</span></dt>
+                <dd *ngFor="let stop of route.intermediatePoints">
+                    <div *ngIf="stop.stationModel">
+                        <span>{{stop.stationModel.name}}</span>
+                    </div>
+                    <div *ngIf="!stop.stationModel">
+                        <span>{{stop.station}}</span>
+                    </div>
                 </dd>
-                <dt><span>End Station</span></dt>
+                <dt><span>End Location</span></dt>
                 <dd>
-                    <span>{{route.endStation}}</span>
+                    <div *ngIf="route.endLocation">
+                        <span>{{route.endLocation.name}}</span>
+                    </div>
+                    <div *ngIf="!route.endLocation">
+                        <span>{{route.endStation}}</span>
+                    </div>
                 </dd>
             </dl>
 
-            <button type="submit"
-                    (click)="previousState()"
-                    class="btn btn-info">
+            <button type="submit" (click)="previousState()" class="btn btn-info">
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span> Back</span>
             </button>
 
-            <button type="button"
-                    [routerLink]="['/route', route.id, 'edit']"
-                    class="btn btn-primary">
+            <button type="button" [routerLink]="['/route', route.id, 'edit']" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span> Edit</span>
             </button>
         </div>

@@ -117,4 +117,9 @@ public class IntermediatePointResource {
         intermediatePointService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
+
+    @GetMapping("/intermediate-points/route/{id}")
+    public ResponseEntity<List<IntermediatePointDTO>> getByRoute(@PathVariable Long id) {
+        return ResponseEntity.ok().body(intermediatePointService.findByRoute(id));
+    }
 }

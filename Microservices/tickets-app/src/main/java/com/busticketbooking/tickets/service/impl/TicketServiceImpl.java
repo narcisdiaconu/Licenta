@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service Implementation for managing Ticket.
@@ -104,6 +105,9 @@ public class TicketServiceImpl implements TicketService {
                 result -= getEliberatedSeats(ocupiedSeatsDTO, i);
             }
         }
+        if (result < 0) {
+            result = new Long(0);
+        }
         return result;
     }
 
@@ -131,5 +135,10 @@ public class TicketServiceImpl implements TicketService {
         }
 
         return result;
+    }
+
+    @Override
+    public List<TicketDTO> getTicketsForUser(Long user) {
+        return this.ticketRepository.findByUser(user).stream().map(ticketMapper::toDto).collect(Collectors.toList());
     }
 }
