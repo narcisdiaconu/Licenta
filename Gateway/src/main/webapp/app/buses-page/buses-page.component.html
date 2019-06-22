@@ -10,7 +10,7 @@
 
 <div *ngIf="!loading && !waitingForOptimal">
     <div class="title">
-        <h4 class="font-weight-bold">Transport from {{data.route.from.city.name}} to {{data.route.to.city.name}}</h4>
+        <h4 class="font-weight-bold">Transport from {{data.route.from.city.name}} to {{data.route.to.city.name}} after {{data.route.hour}}</h4>
     </div>
 
     <div class="container row" *ngIf="optimalRoutes.length > 0">
@@ -156,6 +156,18 @@
                 </div>
             </div>
 
+            <div [hidden]="!showMapView" class="form-group col-md-8 col-lg-8 col-sm-12">
+                <label class="form-control-label">Select a step to focus on map</label>
+                <select class="form-control" id="leg" name="leg" [(ngModel)]="focusedLeg" (change)="fitSelectedLeg()">
+                    <option [ngValue]="'all'">Entire route</option>
+                    <option [ngValue]="leg.id" *ngFor="let leg of getDisplayedRouteLegs();">{{leg.name}}</option>
+                </select>
+                <div *ngIf="htmlInstructions">
+                    <span>Instructions:</span><br>
+                    <p class="margin-none" *ngFor="let instr of htmlInstructions" [innerHTML]="instr"></p>
+                </div>
+            </div>
+
             <div #googlemap class="googlemap" [hidden]="!showMapView"></div>
 
             <div>
@@ -169,6 +181,9 @@
                     <p><b>Total price:</b> {{computePrice(selectedRoute)}} <small class="text-danger" *ngIf="!checkIfAllAreInternal(selectedRoute)">(The price for some legs is not available.)</small></p>
                     <button type="submit" id="booking-button" class="btn btn-primary" (click)="toBooking()" [disabled]="!availableBusesOnRoute()">Book now</button>
                 </div>
+                <small class="form-text text-info" *ngIf="availableBusesOnRoute()">
+                    You can make a booking only for our buses.
+                </small>
                 <div *ngIf="cannotGoToBooking">
                     <small class="form-text text-danger">
                         You can not make a booking at the selected bus! <br>The bus has already left!

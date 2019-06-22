@@ -85,6 +85,15 @@
                             </small>
                         </div>
                     </div>
+                    <div class="col-auto">
+                        <label class="form-control-label" for="address">Address</label>
+                        <input type="text" class="form-control" id="address" name="address" placeholder="Your address" [(ngModel)]="userDetails.address" #addressInput="ngModel" required>
+                        <div *ngIf="addressInput.dirty && addressInput.invalid">
+                            <small class="form-text text-danger" *ngIf="addressInput.errors.required">
+                                Address is required.
+                            </small>
+                        </div>
+                    </div>
 
                 </div>
 
@@ -112,6 +121,8 @@
                     </div> -->
 
                 </div>
+                <small class="form-text text-info">Your information will be saved for future bookings.</small>
+                <small class="form-text text-info">You can view and update your data on <a [routerLink]="['/settings']" routerLinkActive="router-link-active" >your profile</a> page</small>
 
                 <button type="submit" [disabled]="settingsForm.form.invalid || ticketsNumber == 0" class="btn btn-primary submit-btn">Book</button>
                 <small class="form-text text-danger" *ngIf="bookingFailed">Somethin went wrong! Try again later!</small>

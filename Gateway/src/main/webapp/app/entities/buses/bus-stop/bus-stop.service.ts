@@ -36,8 +36,7 @@ export class BusStopService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    getByBus(id: number, req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http.get<IBusStop[]>(`${this.resourceUrl}/bus/${id}`, { params: options, observe: 'response' });
+    getByBus(id: number): Observable<EntityArrayResponseType> {
+        return this.http.get<IBusStop[]>(`${this.resourceUrl}/bus/${id}`, { observe: 'response' });
     }
 }

@@ -2,7 +2,9 @@ package com.busticketbooking.buses.service.impl;
 
 import com.busticketbooking.buses.service.BusService;
 import com.busticketbooking.buses.domain.Bus;
+import com.busticketbooking.buses.domain.BusStop;
 import com.busticketbooking.buses.repository.BusRepository;
+import com.busticketbooking.buses.repository.BusStopRepository;
 import com.busticketbooking.buses.service.dto.BusDTO;
 import com.busticketbooking.buses.service.mapper.BusMapper;
 import org.slf4j.Logger;
@@ -28,9 +30,12 @@ public class BusServiceImpl implements BusService {
 
     private final BusMapper busMapper;
 
-    public BusServiceImpl(BusRepository busRepository, BusMapper busMapper) {
+    private final BusStopRepository busStopRepository;
+
+    public BusServiceImpl(BusRepository busRepository, BusMapper busMapper, BusStopRepository busStopRepository){
         this.busRepository = busRepository;
         this.busMapper = busMapper;
+        this.busStopRepository = busStopRepository;
     }
 
     /**
@@ -84,6 +89,10 @@ public class BusServiceImpl implements BusService {
     @Override
     public void delete(Long id) {
         log.debug("Request to delete Bus : {}", id);
+        Bus bus = busRepository.findById(id).get();
+        for (BusStop stop : busStopRepository.findByBus(bus)) {
+            busStopRepository.delete(stop);
+        }
         busRepository.deleteById(id);
     }
 

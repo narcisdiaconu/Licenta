@@ -8,7 +8,6 @@
                 <tr>
                     <th><span>From</span></th>
                     <th><span>To</span></th>
-                    <th><span>Bus</span></th>
                     <th><span>Date</span></th>
                     <th><span>Places</span></th>
                     <th><span>Price</span></th>
@@ -22,21 +21,23 @@
                     <td *ngIf="ticket.endLocation !== undefined">{{ticket.endLocation.name}}</td>
                     <td *ngIf="ticket.startLocation === undefined">{{ticket.startStation}}</td>
                     <td *ngIf="ticket.endLocation === undefined">{{ticket.endStation}}</td>
-                    <td>{{ticket.bus}}</td>
                     <td>{{ticket.date | date:'mediumDate'}}</td>
                     <td>{{ticket.places}}</td>
                     <td>{{ticket.price}}</td>
-                    <td>{{ticket.paid}}</td>
+                    <td>
+                        <div *ngIf="ticket.paid">Yes</div>
+                        <div *ngIf="!ticket.paid">No</div>
+                    </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <button type="submit" [routerLink]="['/ticket', ticket.id, 'edit']" class="btn btn-danger btn-sm">
-                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                            <span class="d-none d-md-inline">Cancel</span>
-                        </button>
-                            <button type="submit" [routerLink]="['/', 'ticket', { outlets: { popup: ticket.id + '/delete'} }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm">
-                            <fa-icon [icon]="'times'"></fa-icon>
-                            <span class="d-none d-md-inline">Delete</span>
-                        </button>
+                            <button type="button" *ngIf="canBeCanceled(ticket)" (click)="openDeletePopup(ticket.id, 'cancel')" class="btn btn-danger btn-sm">
+                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                <span class="d-none d-md-inline">Cancel booking</span>
+                            </button>
+                            <button type="button" *ngIf="canBeDeleted(ticket)" (click)="openDeletePopup(ticket.id, 'delete')" class="btn btn-danger btn-sm">
+                                <fa-icon [icon]="'times'"></fa-icon>
+                                <span class="d-none d-md-inline">Delete ticket</span>
+                            </button>
                         </div>
                     </td>
                 </tr>

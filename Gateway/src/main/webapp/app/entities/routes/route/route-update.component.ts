@@ -94,6 +94,7 @@ export class RouteUpdateComponent implements OnInit {
                 this.checkForLast();
             });
         });
+        this.checkForLast();
     }
 
     private checkForLast() {

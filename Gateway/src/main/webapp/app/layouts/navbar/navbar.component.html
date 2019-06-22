@@ -1,7 +1,7 @@
 <nav class="navbar navbar-light navbar-expand-md bg-light">
     <a class="navbar-brand logo" routerLink="/" (click)="collapseNavbar()">
-        <span class="logo-img"></span>
-        <span class="navbar-title">Gateway</span>
+        <!-- <span class="logo-img"></span> -->
+        <span class="navbar-title">Bus reservation system</span>
     </a>
     <a class="navbar-toggler d-lg-none" href="javascript:void(0);" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation" (click)="toggleNavbar()">
         <fa-icon icon="bars"></fa-icon>
@@ -22,7 +22,7 @@
                     <span>
                         <fa-icon icon="th-list"></fa-icon>
                         <span>
-                            Entities
+                            Administration
                         </span>
                     </span>
                 </a>
@@ -30,46 +30,46 @@
                     <li>
                         <a class="dropdown-item" routerLink="city" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
-                            <span>City</span>
+                            <span>Cities</span>
                         </a>
                     </li>
 
                     <li>
                         <a class="dropdown-item" routerLink="station" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
-                            <span>Station</span>
+                            <span>Stations</span>
                         </a>
                     </li>
 
                     <li>
                         <a class="dropdown-item" routerLink="route" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
-                            <span>Route</span>
+                            <span>Routes</span>
                         </a>
                     </li>
 
                     <li>
                         <a class="dropdown-item" routerLink="bus" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
-                            <span>Bus</span>
+                            <span>Buses</span>
                         </a>
                     </li>
 
                     <li>
                         <a class="dropdown-item" routerLink="ticket" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
-                            <span>Ticket</span>
+                            <span>Tickets</span>
                         </a>
                     </li>
 
-                    <li>
+                    <!-- <li>
                         <a class="dropdown-item" routerLink="userdetails" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
                             <span>Userdetails</span>
                         </a>
-                    </li>
+                    </li> -->
 
-                    <li>
+                    <!-- <li>
                         <a class="dropdown-item" routerLink="intermediate-point" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
                             <span>Intermediate Point</span>
@@ -81,7 +81,7 @@
                             <fa-icon icon="asterisk" fixedWidth="true"></fa-icon>
                             <span>Bus Stop</span>
                         </a>
-                    </li>
+                    </li> -->
 
                     <!-- jhipster-needle-add-entity-to-menu - JHipster will add entities to the menu here -->
                 </ul>
@@ -90,7 +90,7 @@
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="admin-menu">
                     <span>
                         <fa-icon icon="user-plus"></fa-icon>
-                        <span>Administration</span>
+                        <span>Application Administration</span>
                     </span>
                 </a>
                 <ul class="dropdown-menu" ngbDropdownMenu aria-labelledby="admin-menu">

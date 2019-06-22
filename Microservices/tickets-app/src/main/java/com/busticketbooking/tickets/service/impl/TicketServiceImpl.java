@@ -141,4 +141,8 @@ public class TicketServiceImpl implements TicketService {
     public List<TicketDTO> getTicketsForUser(Long user) {
         return this.ticketRepository.findByUser(user).stream().map(ticketMapper::toDto).collect(Collectors.toList());
     }
+
+    public List<TicketDTO> getByBusAndDate(Long bus, LocalDate date) {
+        return this.ticketRepository.findByBusAndDate(bus, date).stream().map(ticketMapper::toDto).collect(Collectors.toList());
+    }
 }

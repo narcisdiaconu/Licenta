@@ -1,34 +1,39 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, BehaviorSubject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { JhiEventManager, JhiParseLinks, JhiAlertService } from 'ng-jhipster';
 
 import { ITicket } from 'app/shared/model/tickets/ticket.model';
 import { AccountService } from 'app/core';
 
-import { ITEMS_PER_PAGE } from 'app/shared';
 import { TicketService } from './ticket.service';
+import { IRoute } from 'app/shared/model/routes/route.model';
+import { IBus } from 'app/shared/model/buses/bus.model';
+import { RouteService } from 'app/entities/routes/route';
+import { BusService } from 'app/entities/buses/bus';
+import { StationService } from 'app/entities/stations/station';
+import { NgbDateStruct, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
+import { UserdetailsService } from 'app/entities/users/userdetails';
+import { IUserdetails } from 'app/shared/model/users/userdetails.model';
+import { IStation } from 'app/shared/model/stations/station.model';
 
 @Component({
     selector: 'jhi-ticket',
     templateUrl: './ticket.component.html'
 })
-export class TicketComponent implements OnInit, OnDestroy {
+export class TicketComponent implements OnInit {
     currentAccount: any;
     tickets: ITicket[];
     error: any;
-    success: any;
-    eventSubscriber: Subscription;
-    routeData: any;
-    links: any;
-    totalItems: any;
-    itemsPerPage: any;
-    page: any;
     predicate: any;
-    previousPage: any;
     reverse: any;
+    route: number;
+    routes: IRoute[];
+    bus: number;
+    buses: IBus[];
+    date: any;
 
     constructor(
         protected ticketService: TicketService,
@@ -37,78 +42,25 @@ export class TicketComponent implements OnInit, OnDestroy {
         protected accountService: AccountService,
         protected activatedRoute: ActivatedRoute,
         protected router: Router,
-        protected eventManager: JhiEventManager
-    ) {
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.routeData = this.activatedRoute.data.subscribe(data => {
-            this.page = data.pagingParams.page;
-            this.previousPage = data.pagingParams.page;
-            this.reverse = data.pagingParams.ascending;
-            this.predicate = data.pagingParams.predicate;
-        });
-    }
-
-    loadAll() {
-        this.ticketService
-            .query({
-                page: this.page - 1,
-                size: this.itemsPerPage,
-                sort: this.sort()
-            })
-            .subscribe(
-                (res: HttpResponse<ITicket[]>) => this.paginateTickets(res.body, res.headers),
-                (res: HttpErrorResponse) => this.onError(res.message)
-            );
-    }
-
-    loadPage(page: number) {
-        if (page !== this.previousPage) {
-            this.previousPage = page;
-            this.transition();
-        }
-    }
-
-    transition() {
-        this.router.navigate(['/ticket'], {
-            queryParams: {
-                page: this.page,
-                size: this.itemsPerPage,
-                sort: this.predicate + ',' + (this.reverse ? 'asc' : 'desc')
-            }
-        });
-        this.loadAll();
-    }
-
-    clear() {
-        this.page = 0;
-        this.router.navigate([
-            '/ticket',
-            {
-                page: this.page,
-                sort: this.predicate + ',' + (this.reverse ? 'asc' : 'desc')
-            }
-        ]);
-        this.loadAll();
-    }
+        protected eventManager: JhiEventManager,
+        private routeService: RouteService,
+        private busService: BusService,
+        private stationService: StationService,
+        private dpConfig: NgbDatepickerConfig,
+        private userService: UserdetailsService
+    ) {}
 
     ngOnInit() {
-        this.loadAll();
+        this.dpConfig.minDate = { year: 1970, month: 1, day: 1 };
+        this.dpConfig.maxDate = { year: 2100, month: 12, day: 31 };
         this.accountService.identity().then(account => {
             this.currentAccount = account;
         });
-        this.registerChangeInTickets();
+        this.loadRoutes();
     }
 
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-    }
-
-    trackId(index: number, item: ITicket) {
+    trackId(index: number, item) {
         return item.id;
-    }
-
-    registerChangeInTickets() {
-        this.eventSubscriber = this.eventManager.subscribe('ticketListModification', response => this.loadAll());
     }
 
     sort() {
@@ -119,10 +71,42 @@ export class TicketComponent implements OnInit, OnDestroy {
         return result;
     }
 
-    protected paginateTickets(data: ITicket[], headers: HttpHeaders) {
-        this.links = this.parseLinks.parse(headers.get('link'));
-        this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
-        this.tickets = data;
+    updateBuses() {
+        this.buses = undefined;
+        this.bus = undefined;
+        this.tickets = undefined;
+        this.busService.getByRoute(this.route).subscribe((res: HttpResponse<IBus[]>) => {
+            this.buses = res.body;
+            this.buses.sort((bus1: IBus, bus2: IBus) => {
+                return bus1.departureTime.localeCompare(bus2.departureTime);
+            });
+        });
+    }
+
+    checkDate() {
+        this.tickets = undefined;
+        if (this.date !== undefined) {
+            this.loadTickets();
+        }
+    }
+
+    loadTickets() {
+        this.tickets = undefined;
+        const date = new Date(this.date);
+        this.ticketService.getByBusAndDate(this.bus, date).subscribe((res: HttpResponse<ITicket[]>) => {
+            this.tickets = res.body;
+            this.tickets.forEach(ticket => this.loadTicketData(ticket));
+        });
+    }
+
+    private loadTicketData(ticket: ITicket) {
+        this.userService.find(ticket.user).subscribe((res: HttpResponse<IUserdetails>) => (ticket.userModel = res.body));
+        this.stationService.find(ticket.startStation).subscribe((res: HttpResponse<IStation>) => (ticket.startLocation = res.body));
+        this.stationService.find(ticket.endStation).subscribe((res: HttpResponse<IStation>) => (ticket.endLocation = res.body));
+    }
+
+    private loadRoutes() {
+        this.routeService.query().subscribe((res: HttpResponse<IRoute[]>) => (this.routes = res.body));
     }
 
     protected onError(errorMessage: string) {

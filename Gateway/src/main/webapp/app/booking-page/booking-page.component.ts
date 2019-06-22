@@ -31,6 +31,7 @@ export class BookingPageComponent implements OnInit {
     private createdTickets: ITicket[];
     bookingDone = false;
     bookingFailed = false;
+    userDetailsExists: boolean;
 
     constructor(
         private dataService: DataService,
@@ -61,11 +62,14 @@ export class BookingPageComponent implements OnInit {
             this.userDetailsService.getByAccountId(account.id).subscribe(
                 (details: HttpResponse<IUserdetails>) => {
                     this.userDetails = details.body;
+                    this.userDetailsExists = true;
                 },
                 (error: HttpErrorResponse) => {
                     this.userDetails.firstName = account.firstName;
                     this.userDetails.lastName = account.lastName;
                     this.userDetails.email = account.email;
+                    this.userDetails.accountId = parseInt(this.account.id, 10);
+                    this.userDetailsExists = false;
                 }
             );
         });
@@ -73,7 +77,7 @@ export class BookingPageComponent implements OnInit {
 
     private loadPlacesLeft(): void {
         this.buses.forEach(bus => {
-            this.routeService.find(bus.bus_id).subscribe((r: HttpResponse<IRoute>) => {
+            this.routeService.find(bus.route_id).subscribe((r: HttpResponse<IRoute>) => {
                 this.busStopService.getByBus(bus.bus_id).subscribe((stops: HttpResponse<IBusStop[]>) => {
                     const points = [];
                     points.push(r.body.startStation);
@@ -97,11 +101,23 @@ export class BookingPageComponent implements OnInit {
     }
 
     book(): void {
+        if (this.userDetailsExists) {
+            this.userDetailsService
+                .update(this.userDetails)
+                .subscribe((res: HttpResponse<IUserdetails>) => this.createTickets(res.body), err => (this.bookingFailed = true));
+        } else {
+            this.userDetailsService
+                .create(this.userDetails)
+                .subscribe((res: HttpResponse<IUserdetails>) => this.createTickets(res.body), err => (this.bookingFailed = true));
+        }
+    }
+
+    private createTickets(user: IUserdetails) {
         this.createdTickets = [];
         this.buses.forEach(bus => {
             const ticket = new Ticket(
                 null,
-                this.userDetails.id,
+                user.id,
                 bus.bus_id,
                 moment(new Date(bus.departure_time.value * 1000)),
                 this.ticketsNumber,

@@ -14,17 +14,14 @@ class State:
 		self.compute_weight()
 
 	def compute_weight(self):
-		# Add wait time
 		time = self.available_route['arrival_time']['text']
 		arrival = utils.create_datetime_from_date_and_string(self.current_time, time)
 
 		time = arrival - self.current_time
 		self.weight += time.total_seconds() * 2
 
-		# Add duration
 		self.weight += self.available_route['duration']['value']
 
-		# Add wait time until first step
 		if len(self.current_route) == 0:
 			time = datetime.datetime.fromtimestamp(self.available_route['departure_time']['value'])
 			self.weight += (time - self.current_time).total_seconds()
@@ -37,20 +34,26 @@ class State:
 		route.append(self.available_route)
 		return route
 
-	def check_for_bad_data(self):
+	def is_not_suitable(self):
 		time = datetime.datetime.fromtimestamp(self.available_route['departure_time']['value'])
 		if (time - self.current_time).total_seconds() > (3600 * 12):
 			return True
 		
 		for i in range(len(self.current_route) - 1):
-			first = datetime.datetime.fromtimestamp(self.current_route[i]['arrival_time'])
-			next = datetime.datetime.fromtimestamp(self.current_route[i + 1]['departure_time'])
+			first = datetime.datetime.fromtimestamp(self.current_route[i]['arrival_time']['value'])
+			next = datetime.datetime.fromtimestamp(self.current_route[i + 1]['departure_time']['value'])
 			if (next - first).total_seconds() > (3600 * 12):
 				return True
 		return False
 
+	def get_current_time(self):
+		return utils.create_datetime_from_date_and_string(self.current_time, self.available_route['arrival_time']['text'])
+
+	def get_current_location(self):
+		return dict(self.available_route['end_location'])
+
 class Algorithm:
-	def __init__(self, data: dict, distance_function):
+	def __init__(self, data: dict, distance_function, max_responses):
 		self.data = data
 		self.converted_data = utils.convert_given_data(data)
 		self.start_location = data['startLocation']
@@ -58,52 +61,63 @@ class Algorithm:
 		time = data['departureTime']
 		self.departure_time = datetime.datetime.fromtimestamp(time)
 		self.distance_function = distance_function
+		self.maximum_responses = max_responses
 
-	def run(self):
-		result = []
-		current_location = self.start_location
-		current_route = []
-		current_time = self.departure_time
+
+	def Astar(self):
+		routes = []
 		open_set = []
-		available_dests = self.available_routes(self.start_location, self.departure_time, self.end_location)
-		for dest in available_dests:
-			open_set.append(State(list(current_route), dict(current_location), current_time, dict(dest)))
-		# routes = utils.retrieve_directions(current_location, self.end_location, current_time)
-		# for route in routes:
-		# 	open_set.append(State(current_route, current_location, current_time, route))
+
+		for available_destination in self.get_available_destinations(self.start_location, self.departure_time, self.end_location):
+			open_set.append(available_destination)
 		while open_set:
-			# Choose best route from open_set.
-			current = self.get_best_state(open_set)
+			best_state = self.get_best_state(open_set)
+			open_set.remove(best_state)
 
-			# Remove selected from open_set.
-			open_set.remove(current)
+			if best_state.is_not_suitable():
+				return routes
 
-			# Check for bad data			
-			if current.check_for_bad_data():
-				return result
-
-			# Check if current route is a final one and save it.
-			if self.is_final(current):
-				result.append(current.extract_route())
-				if len(result) == 5:
-					return result
+			if self.is_final(best_state):
+				routes.append(best_state.extract_route())
+				if len(routes) == self.maximum_responses:
+					return routes
 				continue
 
-			# Add accesible states for current state in open_set.
-			current_time = utils.create_datetime_from_date_and_string(current_time, current.available_route['arrival_time']['text'])
-			current_route = list(current.current_route)
-			current_route.append(current.available_route)
-			current_location = dict(current.available_route['end_location'])
-			for route in self.available_routes(dict(current_location), current.end_date_time(), self.end_location):
-				open_set.append(State(list(current_route), dict(current_location), current_time, route, current.weight))
+			for available_destination in self.get_available_destinations(best_state.get_current_location(), best_state.get_current_time(), self.end_location, best_state):
+				open_set.append(available_destination)
+		return routes
 
-			# routes = utils.retrieve_directions(current_location, self.end_location, current_time)
-			# for route in routes:
-			# 	open_set.append(State(list(current_route), dict(current_location), current_time, route, current.weight))
+
+	def get_available_destinations(self, current_location, current_time, end_location, best_route = 0):
+		result = []
+
+		if best_route == 0:
+			weight = 0
+			current_route = []
+			time = current_time
+		else:
+			weight = best_route.weight
+			current_route = list(best_route.current_route)
+			current_route.append(best_route.available_route)
+			time = best_route.end_date_time()
+		for route in self.available_routes(dict(current_location), current_time, end_location):
+			result.append(State(list(current_route), dict(current_location), time, route, weight))
+		
+		directions = utils.retrieve_directions(current_location, end_location, current_time)
+		for route in directions:
+			result.append(State(list(current_route), dict(current_location), time, route, weight))
+		
 		return result
 
 	def get_best_state(self, states: list) -> State:
 		return sorted(states, key = lambda x : x.weight)[0]
+
+	def get_H_score(self, state):
+		distance1 = utils.haversine_distance(self.start_location, state.current_location)
+		if distance1 == 0:
+			return 0
+		distance2 = utils.haversine_distance(state.current_location, self.end_location)
+		return distance2 * state.weight / distance1
 		
 	def is_final(self, state: State):
 		if state.available_route.get('type', 0) == 'INTERNAL':
@@ -112,7 +126,7 @@ class Algorithm:
 			return False
 		
 		dist = self.distance_function(self.end_location, state.available_route['end_location'])
-		return dist < 10
+		return dist < 50
 
 	def write_result(self):
 		file = open('result.json', 'w')

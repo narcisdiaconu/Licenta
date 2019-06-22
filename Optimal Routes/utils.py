@@ -263,23 +263,23 @@ def add_waitings(route):
 	for i in range(len(route) - 1):
 		if route[i]['type'] == 'INTERNAL':
 			if route[i+1]['type'] == 'INTERNAL':
-				route[i]['wait_time'] = get_wait_time(route[i], route[i+1])
+				route[i]['wait_time'] = dict(get_wait_time(route[i], route[i+1]))
 			elif route[i+1]['type'] == 'EXTERNAL':
-				route[i]['wait_time'] = get_wait_time(route[i], route[i+1]['departure_time'])
+				route[i]['wait_time'] = dict(get_wait_time(route[i], route[i+1]['departure_time']))
 		else:
 			if route[i]['steps'][-1]['travel_mode'] == 'TRANSIT':
 				if route[i+1]['type'] == 'INTERNAL':
-					route[i]['steps'][-1]['wait_time'] = get_wait_time(route[i]['steps'][-1]['transit_details'], route[i+1])
+					route[i]['steps'][-1]['wait_time'] = dict(get_wait_time(route[i]['steps'][-1]['transit_details'], route[i+1]))
 			elif route[i+1]['type'] == 'EXTERNAL':
 				if route[i+1]['steps'][0]['travel_mode'] == 'TRANSIT':
-					route[i]['steps'][-1]['wait_time'] = get_wait_time(route[i]['steps'][-1]['transit_details'], route[i+1]['steps'][0]['transit_details'])
+					route[i]['steps'][-1]['wait_time'] = dict(get_wait_time(route[i]['steps'][-1]['transit_details'], route[i+1]['steps'][0]['transit_details']))
 			for j in range(len(route[i]['steps']) - 1):
 				if route[i]['steps'][j]['travel_mode'] == 'TRANSIT' and route[i]['steps'][j+1]['travel_mode'] == 'TRANSIT':
-					route[i]['steps'][j]['wait_time'] = get_wait_time(route[i]['steps'][j]['transit_details'], route[i]['steps'][j+1]['transit_details'])
+					route[i]['steps'][j]['wait_time'] = dict(get_wait_time(route[i]['steps'][j]['transit_details'], route[i]['steps'][j+1]['transit_details']))
 	if route[-1]['type'] == 'EXTERNAL':
 		for j in range(len(route[-1]['steps']) - 1):
 			if route[-1]['steps'][j]['travel_mode'] == 'TRANSIT' and route[-1]['steps'][j+1]['travel_mode'] == 'TRANSIT':
-				route[-1]['steps'][j]['wait_time'] = get_wait_time(route[-1]['steps'][j]['transit_details'], route[-1]['steps'][j+1]['transit_details'])
+				route[-1]['steps'][j]['wait_time'] = dict(get_wait_time(route[-1]['steps'][j]['transit_details'], route[-1]['steps'][j+1]['transit_details']))
 	return route
 
 def get_wait_time(start, end):

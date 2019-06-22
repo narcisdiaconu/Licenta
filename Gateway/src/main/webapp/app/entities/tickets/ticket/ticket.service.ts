@@ -66,6 +66,12 @@ export class TicketService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
+    getByBusAndDate(bus: number, date: Date): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<ITicket[]>(`${this.resourceUrl}/bus/${bus}?date=${date.toLocaleDateString()}`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
+
     private convertBusToOcupiedSeat(bus, stops): IOcupiedSeats {
         const busDate = new Date(bus.departure_time.value * 1000);
         const data: IOcupiedSeats = new OcupiedSeats(bus.bus_id, stops, moment(busDate), bus.start_location.id, bus.end_location.id);

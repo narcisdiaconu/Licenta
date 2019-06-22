@@ -16,7 +16,8 @@ import { IIntermediatePoint } from 'app/shared/model/routes/intermediate-point.m
 
 @Component({
     selector: 'jhi-bus-update',
-    templateUrl: './bus-update.component.html'
+    templateUrl: './bus-update.component.html',
+    styleUrls: ['./bus.component.css']
 })
 export class BusUpdateComponent implements OnInit {
     bus: IBus;
@@ -26,6 +27,7 @@ export class BusUpdateComponent implements OnInit {
     busStops: IBusStop[];
     responses: any[];
     totalLength: number;
+    days: string[];
 
     constructor(
         protected busService: BusService,
@@ -37,6 +39,7 @@ export class BusUpdateComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        this.days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ bus }) => {
             this.bus = bus;
@@ -47,9 +50,18 @@ export class BusUpdateComponent implements OnInit {
                     this.loadStations(this.bus.routeModel);
                     this.loadStops(this.bus);
                 });
+            } else {
+                this.bus.days = '1111111';
+                this.bus.busStops = [];
             }
         });
         this.loadRoutes();
+    }
+
+    convertDaysToNumberArray(bus: IBus): number[] {
+        const result = [];
+        bus.days.split('').forEach(day => result.push(parseInt(day, 10)));
+        return result;
     }
 
     previousState() {
@@ -83,6 +95,12 @@ export class BusUpdateComponent implements OnInit {
         }
     }
 
+    changeDay(index: number) {
+        let old = this.bus.days.charAt(index);
+        old = old === '0' ? '1' : '0';
+        this.bus.days = this.bus.days.substr(0, index) + old + this.bus.days.substr(index + 1);
+    }
+
     protected subscribeToSaveResponse(result: Observable<HttpResponse<IBus>>) {
         result.subscribe((res: HttpResponse<IBus>) => this.saveSteps(res.body), (res: HttpErrorResponse) => this.onSaveError());
     }
@@ -100,6 +118,7 @@ export class BusUpdateComponent implements OnInit {
                 })
             );
         }
+        this.checkForFinal();
 
         this.busStops.forEach(stop => {
             stop.busId = bus.id;

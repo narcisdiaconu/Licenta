@@ -1,6 +1,7 @@
 import { Moment } from 'moment';
 import { IStation } from '../stations/station.model';
 import { IBus } from '../buses/bus.model';
+import { IUserdetails } from '../users/userdetails.model';
 
 export interface ITicket {
     id?: number;
@@ -15,6 +16,7 @@ export interface ITicket {
     startLocation?: IStation;
     endLocation?: IStation;
     busModel?: IBus;
+    userModel?: IUserdetails;
 }
 
 export class Ticket implements ITicket {

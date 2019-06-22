@@ -73,8 +73,11 @@ public class UserdetailsResource {
         if (userdetailsDTO.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        if (userdetailsService.findByEmail(userdetailsDTO.getEmail()).isPresent()) {
-            throw new EmailAlreadyUsedException();
+        Optional<UserdetailsDTO> existingUser = userdetailsService.findByEmail(userdetailsDTO.getEmail());
+        if (existingUser.isPresent()) {
+            if (!existingUser.get().getId().equals(userdetailsDTO.getId())){
+                throw new EmailAlreadyUsedException();
+            }
         }
         UserdetailsDTO result = userdetailsService.save(userdetailsDTO);
         return ResponseEntity.ok()

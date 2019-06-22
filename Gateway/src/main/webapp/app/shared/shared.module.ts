@@ -5,18 +5,20 @@ import { NgbDateMomentAdapter } from './util/datepicker-adapter';
 import { GatewaySharedLibsModule, GatewaySharedCommonModule, JhiLoginModalComponent, HasAnyAuthorityDirective } from './';
 import { JhiMaterialModule } from 'app/app.angularmat.module';
 import { BookingConfirmationModalComponent } from 'app/booking-page/booking-confirmation';
+import { TicketRemoveModalComponent } from 'app/account/tickets/tickets-remove.modal';
 
 @NgModule({
     imports: [GatewaySharedLibsModule, GatewaySharedCommonModule, JhiMaterialModule],
-    declarations: [JhiLoginModalComponent, HasAnyAuthorityDirective, BookingConfirmationModalComponent],
+    declarations: [JhiLoginModalComponent, HasAnyAuthorityDirective, BookingConfirmationModalComponent, TicketRemoveModalComponent],
     providers: [{ provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
-    entryComponents: [JhiLoginModalComponent, BookingConfirmationModalComponent],
+    entryComponents: [JhiLoginModalComponent, BookingConfirmationModalComponent, TicketRemoveModalComponent],
     exports: [
         GatewaySharedCommonModule,
         JhiLoginModalComponent,
         HasAnyAuthorityDirective,
         JhiMaterialModule,
-        BookingConfirmationModalComponent
+        BookingConfirmationModalComponent,
+        TicketRemoveModalComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

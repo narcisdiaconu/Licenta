@@ -15,7 +15,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service Implementation for managing BusStop.
@@ -92,9 +94,9 @@ public class BusStopServiceImpl implements BusStopService {
         busStopRepository.deleteById(id);
     }
 
-    public Page<BusStopDTO> findByBus(Pageable pageable, Long id){
+    public List<BusStopDTO> findByBus(Long id){
         Optional<Bus> bus = busRepository.findById(id);
-        return busStopRepository.findByBus(pageable, bus.get())
-            .map(busStopMapper::toDto);
+        return busStopRepository.findByBus(bus.get()).stream()
+            .map(busStopMapper::toDto).collect(Collectors.toList());
     }
 }

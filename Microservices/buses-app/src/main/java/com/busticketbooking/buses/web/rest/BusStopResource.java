@@ -119,10 +119,9 @@ public class BusStopResource {
     }
 
     @GetMapping("/bus-stops/bus/{busId}")
-    public ResponseEntity<List<BusStopDTO>> getBusStopsByBus(Pageable pageable, @PathVariable Long busId) {
+    public ResponseEntity<List<BusStopDTO>> getBusStopsByBus(@PathVariable Long busId) {
         log.debug("REST request to get a page of BusStops");
-        Page<BusStopDTO> page = busStopService.findByBus(pageable, busId);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/bus-stops");
-        return ResponseEntity.ok().headers(headers).body(page.getContent());
+        List<BusStopDTO> result = busStopService.findByBus(busId);
+        return ResponseEntity.ok().body(result);
     }
 }

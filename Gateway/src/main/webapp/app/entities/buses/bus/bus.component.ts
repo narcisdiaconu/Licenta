@@ -17,7 +17,8 @@ import { BusDeleteDialogComponent } from './bus-delete-dialog.component';
 
 @Component({
     selector: 'jhi-bus',
-    templateUrl: './bus.component.html'
+    templateUrl: './bus.component.html',
+    styleUrls: ['./bus.component.css']
 })
 export class BusComponent implements OnInit, OnDestroy {
     currentAccount: any;
@@ -34,6 +35,7 @@ export class BusComponent implements OnInit, OnDestroy {
     previousPage: any;
     reverse: any;
     private ngbModalRef: NgbModalRef;
+    days: string[];
 
     constructor(
         protected busService: BusService,
@@ -99,6 +101,7 @@ export class BusComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
         this.loadAll();
         this.accountService.identity().then(account => {
             this.currentAccount = account;
@@ -143,6 +146,12 @@ export class BusComponent implements OnInit, OnDestroy {
                 }
             );
         }, 0);
+    }
+
+    convertDaysToNumberArray(bus: IBus): number[] {
+        const result = [];
+        bus.days.split('').forEach(day => result.push(parseInt(day, 10)));
+        return result;
     }
 
     protected paginateBuses(data: IBus[], headers: HttpHeaders) {

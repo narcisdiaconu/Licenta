@@ -6,6 +6,7 @@ import com.busticketbooking.tickets.service.dto.TicketDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,4 +50,6 @@ public interface TicketService {
     Long getOcupiedSeats(OcupiedSeatsDTO ocupiedSeatsDTO);
 
     List<TicketDTO> getTicketsForUser(Long user);
+
+    List<TicketDTO> getByBusAndDate(Long bus, LocalDate date);
 }

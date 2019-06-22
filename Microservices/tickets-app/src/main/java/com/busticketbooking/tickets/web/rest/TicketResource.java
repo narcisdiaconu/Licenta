@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +20,12 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
-
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -130,5 +137,11 @@ public class TicketResource {
     public ResponseEntity<List<TicketDTO>> getTicketForUser(@PathVariable Long id) {
         List<TicketDTO> tickets = ticketService.getTicketsForUser(id);
         return ResponseEntity.ok().body(tickets);
+    }
+
+    @GetMapping("/tickets/bus/{id}")
+    public ResponseEntity<List<TicketDTO>> getTicketsByBusAndDate(@PathVariable Long id, @RequestParam(name = "date") String date) {
+        LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("M/d/y"));
+        return ResponseEntity.ok().body(ticketService.getByBusAndDate(id, localDate));
     }
 }

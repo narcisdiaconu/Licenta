@@ -36,19 +36,8 @@ import {} from 'googlemaps';
 export class BusesPageComponent implements OnInit {
     @ViewChild('googlemap') googlemapElement: any;
     data: any;
-    routes: IRoute[];
-    stations: IStation[];
-    cities: ICity[];
-
-    buses: BusModel[];
-    startLocation: string;
-    endLocation: string;
-    selectedBus: BusModel;
     showBusStops: boolean;
     lastBusId: string;
-    startMarker: mapboxgl.Marker;
-    endMarker: mapboxgl.Marker;
-
     showMapView: boolean;
     cannotGoToBooking = false;
     private allData: any = {};
@@ -61,6 +50,9 @@ export class BusesPageComponent implements OnInit {
     displayedRoute: string;
     private displayedLegs: any[] = [];
     error: boolean;
+    focusedLeg: any;
+    waitingForBusesDirections: boolean;
+    htmlInstructions: string;
 
     constructor(
         private dataService: DataService,
@@ -83,15 +75,12 @@ export class BusesPageComponent implements OnInit {
         this.lastBusId = undefined;
         this.showMapView = false;
         this.showBusStops = false;
-        this.buses = [];
         this.error = false;
         this.dataService.getData().subscribe(data => {
             if (data.route === undefined) {
                 this.router.navigate(['']);
             }
             this.data = data;
-            this.startLocation = this.data.route.from.name;
-            this.endLocation = this.data.route.to.name;
             this.loadAllData();
         });
     }
@@ -276,6 +265,7 @@ export class BusesPageComponent implements OnInit {
         element.className = 'list-group-item selected';
 
         this.cannotGoToBooking = false;
+        this.htmlInstructions = undefined;
         this.loadOccupiedSeats(route);
         this.displayRouteOnMap(route);
     }
@@ -383,6 +373,10 @@ export class BusesPageComponent implements OnInit {
         if (this.showMapView !== true) {
             return;
         }
+        this.loadInternalBusesDirections(route);
+        if (this.waitingForBusesDirections) {
+            return;
+        }
 
         this.hideOldRoute(this.displayedRoute);
 
@@ -391,23 +385,53 @@ export class BusesPageComponent implements OnInit {
             return;
         }
 
-        const newLeg = { id: route.summary.id, legs: [] };
+        const newLeg = { id: route.summary.id, legs: [], bounds: {} };
 
+        let index = 0;
+        let startPosition = undefined;
+        let last;
+        let result;
+        const bounds = new google.maps.LatLngBounds();
         route.route.forEach(r => {
             if (r.type === 'INTERNAL') {
-                newLeg.legs.push(this.displayBusOnMap(r));
+                result = this.displayBusOnMap(r);
+                result.id = index;
+                index += 1;
+                if (startPosition === undefined) {
+                    startPosition = result;
+                }
+                newLeg.legs.push(result);
+                last = result;
             } else if (r.type === 'EXTERNAL') {
                 r.steps.forEach(step => {
                     if (step.travel_mode === 'WALKING') {
-                        newLeg.legs.push(this.displayWalkOnMap(step));
+                        result = this.displayWalkOnMap(step);
                     } else if (step.travel_mode === 'TRANSIT') {
-                        newLeg.legs.push(this.displayTransitOnMap(step));
+                        result = this.displayTransitOnMap(step);
                     }
+                    result.id = index;
+                    index += 1;
+                    if (startPosition === undefined) {
+                        startPosition = result;
+                    }
+                    newLeg.legs.push(result);
+                    last = result;
                 });
             }
         });
+        bounds.extend(startPosition.startMarker.getPosition());
+        bounds.extend(last.endMarker.getPosition());
+        newLeg.bounds = bounds;
+        startPosition.startMarker.setMap(this.map);
+        last.endMarker.setMap(this.map);
         this.displayedRoute = route.summary.id;
         this.displayedLegs.push(newLeg);
+        this.fitOnMap(bounds);
+    }
+
+    getDisplayedRouteLegs(): any[] {
+        const leg = this.displayedLegs.find(l => l.id === this.displayedRoute);
+        return leg !== undefined ? leg.legs : [];
     }
 
     private hideOldRoute(route) {
@@ -427,45 +451,30 @@ export class BusesPageComponent implements OnInit {
         let found = false;
         this.displayedLegs.forEach(leg => {
             if (leg.id === route) {
-                console.log(leg);
+                let last;
                 leg.legs.forEach(l => {
+                    if (last === undefined) {
+                        l.startMarker.setMap(this.map);
+                    }
                     l.path.setMap(this.map);
-                    l.startMarker.setMap(this.map);
-                    l.endMarker.setMap(this.map);
+                    last = l;
                 });
+                this.fitOnMap(leg.bounds);
+                last.endMarker.setMap(this.map);
                 found = true;
             }
         });
         return found;
     }
 
-    private displayBusOnMap(bus) {
-        const coordinates = [];
-        if (bus.steps.length > 0) {
-            bus.steps.forEach(step => {
-                coordinates.push({
-                    lat: step.start_location.latitude,
-                    lng: step.start_location.longitude
-                });
-                coordinates.push({
-                    lat: step.end_location.latitude,
-                    lng: step.end_location.longitude
-                });
-            });
-        } else {
-            coordinates.push({
-                lat: bus.start_location.latitude,
-                lng: bus.start_location.longitude
-            });
-            coordinates.push({
-                lat: bus.end_location.latitude,
-                lng: bus.end_location.longitude
-            });
-        }
+    private fitOnMap(bounds: google.maps.LatLngBounds) {
+        this.map.fitBounds(bounds);
+    }
 
+    private displayBusOnMap(bus) {
         const path = new google.maps.Polyline({
-            path: coordinates,
-            strokeColor: '#125fd3',
+            path: bus.directions,
+            strokeColor: '#8218f4',
             map: this.map
         });
         const startMarker = new google.maps.Marker({
@@ -473,24 +482,31 @@ export class BusesPageComponent implements OnInit {
                 lat: bus.start_location.latitude,
                 lng: bus.start_location.longitude
             },
-            map: this.map,
-            title: 'Start'
+            map: null,
+            title: 'Start',
+            label: 'A'
         });
         const endMarker = new google.maps.Marker({
             position: {
                 lat: bus.end_location.latitude,
                 lng: bus.end_location.longitude
             },
-            map: this.map,
-            title: 'End'
+            map: null,
+            title: 'End',
+            label: 'B'
         });
-        return { path, startMarker, endMarker };
+        const name = 'Bus: ' + bus.start_location.name + ' - ' + bus.end_location.name;
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(startMarker.getPosition());
+        bounds.extend(endMarker.getPosition());
+        return { path, startMarker, endMarker, name, bounds };
     }
 
     private displayWalkOnMap(walk) {
+        const coords = google.maps.geometry.encoding.decodePath(walk.polyline.points);
         const path = new google.maps.Polyline({
-            path: google.maps.geometry.encoding.decodePath(walk.polyline.points),
-            strokeColor: '#3c8a08',
+            path: coords,
+            strokeColor: '#8218f4',
             map: this.map
         });
         const startMarker = new google.maps.Marker({
@@ -498,23 +514,31 @@ export class BusesPageComponent implements OnInit {
                 lat: walk.start_location.latitude,
                 lng: walk.start_location.longitude
             },
-            map: this.map,
-            title: 'Start'
+            map: null,
+            title: 'Start',
+            label: 'A'
         });
         const endMarker = new google.maps.Marker({
             position: {
                 lat: walk.end_location.latitude,
                 lng: walk.end_location.longitude
             },
-            map: this.map,
-            title: 'End'
+            map: null,
+            title: 'End',
+            label: 'B'
         });
-        return { path, startMarker, endMarker };
+        const name = 'Walk: ' + walk.html_instructions;
+        const bounds = new google.maps.LatLngBounds();
+        coords.forEach(coord => bounds.extend(coord));
+        const instructions = [];
+        walk.steps.forEach(step => instructions.push(step.html_instructions));
+        return { path, startMarker, endMarker, name, bounds, html_instructions: instructions };
     }
 
     private displayTransitOnMap(transit) {
+        const coords = google.maps.geometry.encoding.decodePath(transit.polyline.points);
         const path = new google.maps.Polyline({
-            path: google.maps.geometry.encoding.decodePath(transit.polyline.points),
+            path: coords,
             strokeColor: '#8218f4',
             map: this.map
         });
@@ -523,194 +547,106 @@ export class BusesPageComponent implements OnInit {
                 lat: transit.start_location.latitude,
                 lng: transit.start_location.longitude
             },
-            map: this.map,
-            title: 'Start'
+            map: null,
+            title: 'Start',
+            label: 'A'
         });
         const endMarker = new google.maps.Marker({
             position: {
                 lat: transit.end_location.latitude,
                 lng: transit.end_location.longitude
             },
-            map: this.map,
-            title: 'End'
+            map: null,
+            title: 'End',
+            label: 'B'
         });
-        return { path, startMarker, endMarker };
+        const name = transit.transit_details.line.vehicle.name + ': ' + transit.html_instructions;
+        const bounds = new google.maps.LatLngBounds();
+        coords.forEach(coord => bounds.extend(coord));
+        return { path, startMarker, endMarker, name, bounds };
+    }
+
+    fitSelectedLeg() {
+        if (this.focusedLeg === 'all') {
+            this.fitOnMap(this.displayedLegs.find(leg => leg.id === this.selectedRoute.summary.id).bounds);
+            this.showOldRoute(this.displayedRoute);
+            this.htmlInstructions = undefined;
+        } else {
+            this.displayedLegs
+                .find(leg => leg.id === this.selectedRoute.summary.id)
+                .legs.forEach(leg => {
+                    if (leg.id === this.focusedLeg) {
+                        leg.path.setMap(this.map);
+                        leg.startMarker.setMap(this.map);
+                        leg.endMarker.setMap(this.map);
+                        this.fitOnMap(leg.bounds);
+                        this.htmlInstructions = leg.html_instructions;
+                    } else {
+                        leg.path.setMap(null);
+                        leg.startMarker.setMap(null);
+                        leg.endMarker.setMap(null);
+                    }
+                });
+        }
+    }
+
+    private loadInternalBusesDirections(route) {
+        const responses = [];
+        let sended = 0;
+        route.route.forEach(r => {
+            if (r.type === 'INTERNAL') {
+                if (r.directions === undefined) {
+                    this.waitingForBusesDirections = true;
+                    sended++;
+                    const coordinates: Coordinate[] = [];
+                    if (r.steps.length > 0) {
+                        r.steps.forEach(step => {
+                            coordinates.push({
+                                latitude: step.start_location.latitude,
+                                longitude: step.start_location.longitude
+                            });
+                            coordinates.push({
+                                latitude: step.end_location.latitude,
+                                longitude: step.end_location.longitude
+                            });
+                        });
+                    } else {
+                        coordinates.push({
+                            latitude: r.start_location.latitude,
+                            longitude: r.start_location.longitude
+                        });
+                        coordinates.push({
+                            latitude: r.end_location.latitude,
+                            longitude: r.end_location.longitude
+                        });
+                    }
+                    this.mapService.retrieveDirections(Profiles.Driving, coordinates).subscribe(
+                        (res: HttpResponse<any>) => {
+                            const coords = [];
+                            res.body.routes[0].geometry.coordinates.forEach(c => coords.push(new google.maps.LatLng(c[1], c[0])));
+                            r.directions = coords;
+                            responses.push(0);
+                            if (responses.length === sended) {
+                                this.waitingForBusesDirections = false;
+                                this.displayRouteOnMap(route);
+                            }
+                        },
+                        err => console.log(err)
+                    );
+                }
+            }
+        });
     }
 
     // Unused functions
 
-    loadData() {
-        this.findStation();
-        this.loadCities();
-        this.getRoutes(this.data.route.from, this.data.route.to);
-    }
-
-    private findStation() {
-        this.stationService.query().subscribe(
-            (res: HttpResponse<IStation[]>) => {
-                this.stations = res.body;
-            },
-            (res: HttpErrorResponse) => console.log(res)
-        );
-    }
-
-    private getRoutes(startStation, endStation) {
-        this.routeService.findByStartAndEnd(startStation.id, endStation.id).subscribe((res: HttpResponse<IRoute[]>) => {
-            this.routes = res.body;
-
-            // Call to get all buses for selected route.
-            this.routes.forEach(route => {
-                const data = {
-                    startStation,
-                    endStation,
-                    route
-                };
-                this.getBuses(data);
-            });
-        });
-    }
-
-    private getBuses(data) {
-        this.busService.getByRoute(data.route.id).subscribe((res: HttpResponse<IBus[]>) => {
-            const date = new Date(this.data.route.date);
-            // const date = new Date(this.data.route.date.year, this.data.route.date.month, this.data.route.date.day);
-            let day = date.getDay();
-            if (day === 0) {
-                day = 7;
-            }
-
-            const buses = this.filterByDate(
-                res.body.filter(bus => {
-                    return bus.departureTime >= this.data.route.hour;
-                }),
-                day
-            );
-            buses.forEach(bus => {
-                const busModel = new BusModel(bus, data.route, data.startStation, data.endStation, date, TravelMode.Bus, 0);
-                this.buses.push(busModel);
-                this.buses.sort((bus1, bus2) => {
-                    if (bus1.bus.departureTime < bus2.bus.departureTime) {
-                        return -1;
-                    } else if (bus1.bus.departureTime > bus2.bus.departureTime) {
-                        return 1;
-                    }
-                    return 0;
-                });
-            });
-            if (this.buses.length > 0) {
-                this.selectedBus = this.buses[0];
-                this.loadIntermediateStops(this.selectedBus);
-            }
-        });
-    }
-
-    private filterByDate(buses: IBus[], day: number): IBus[] {
-        return buses.filter(bus => {
-            return bus.days.charAt(day - 1) === '1';
-        });
-    }
-
-    private loadCities() {
-        this.cityService.query().subscribe((res: HttpResponse<ICity[]>) => {
-            this.cities = res.body;
-        });
-    }
-
-    getTotalTime(bus: IBus) {
-        const arrival = bus.arrivalTime.split(':');
-        const departure = bus.departureTime.split(':');
-
-        let resultHour = parseInt(arrival[0], 10) - parseInt(departure[0], 10);
-        let resultMinute = parseInt(arrival[1], 10) - parseInt(departure[1], 10);
-
-        if (resultMinute < 0) {
-            resultHour -= 1;
-            resultMinute = 60 + resultMinute;
-        }
-        return resultHour + ':' + resultMinute;
-    }
-
-    getStopsForCurrentBus() {
-        const result: IBusStop[] = [];
-        const stops = this.selectedBus.bus.busStops;
-        if (stops === undefined) {
-            return undefined;
-        }
-        for (let index = 0; index < stops.length; index++) {
-            if (stops[index].station === this.selectedBus.end.id) {
-                break;
-            }
-            result.push(stops[index]);
-        }
-        if (result.length === 0) {
-            return undefined;
-        }
-        return result;
-    }
-
     private getDirections(bus: BusModel) {
         const coordinates: Coordinate[] = [];
         coordinates.push(new Coordinate(bus.start.latitude, bus.start.longitude));
-        if (bus.bus.busStops !== undefined) {
-            bus.bus.busStops.forEach(stop => {
-                const station = this.getStationById(stop.station);
-                coordinates.push(new Coordinate(station.latitude, station.longitude));
-            });
-        }
         coordinates.push(new Coordinate(bus.end.latitude, bus.end.longitude));
 
         this.mapService.retrieveDirections(Profiles.Driving, coordinates).subscribe((res: HttpResponse<any>) => {
             bus.directions = res.body;
-            this.updateBusInList(bus);
-            // this.drawDirectionOnMap(bus);
-        });
-    }
-
-    private updateBusInList(bus: BusModel) {
-        const index = this.buses.findIndex((b: BusModel) => {
-            if (b.bus.id === bus.bus.id) {
-                return true;
-            }
-            return false;
-        });
-        if (index === -1) {
-            return;
-        }
-        this.buses[index] = bus;
-        if (this.selectedBus.bus.id === bus.bus.id) {
-            this.selectedBus = bus;
-        }
-    }
-
-    private loadIntermediateStops(bus: BusModel): void {
-        if (bus.bus.busStops !== undefined) {
-            return;
-        }
-
-        this.busStopService.getByBus(bus.bus.id).subscribe((res: HttpResponse<IBusStop[]>) => {
-            bus.bus.busStops = res.body;
-            this.updateBusInList(bus);
-            this.getDirections(bus);
-        });
-    }
-
-    getStationById(id: number): IStation {
-        return this.stations.find((station: IStation) => {
-            if (station.id === id) {
-                return true;
-            }
-            return false;
-        });
-    }
-
-    getCityByStation(id: number): ICity {
-        const cityId = this.getStationById(id).cityId;
-
-        return this.cities.find((city: ICity) => {
-            if (city.id === cityId) {
-                return true;
-            }
-            return false;
         });
     }
 
@@ -750,8 +686,6 @@ export class BusesPageComponent implements OnInit {
             const today = new Date();
             const date = new Date(b.departure_time.value * 1000);
             if (today.getTime() > date.getTime()) {
-                console.log(date.getTime());
-                console.log(today.getTime());
                 result = false;
             }
         });

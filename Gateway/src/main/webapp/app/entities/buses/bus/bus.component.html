@@ -8,7 +8,7 @@
             </span>
         </button>
     </h2>
-    <jhi-alert></jhi-alert>
+    <!-- <jhi-alert></jhi-alert> -->
     <br/>
     <div class="table-responsive" *ngIf="buses">
         <table class="table table-striped">
@@ -49,7 +49,18 @@
                     <td>{{bus.totalPlaces}}</td>
                     <td>{{bus.departureTime}}</td>
                     <td>{{bus.arrivalTime}}</td>
-                    <td>{{bus.days}}</td>
+                    <td>
+                        <div class="btn-group">
+                            <div *ngFor="let day of convertDaysToNumberArray(bus); let i = index">
+                                <button *ngIf="day" class="btn btn-success btn-sm btn-day" disabled>
+                                    {{days[i]}}
+                                </button>
+                                <button *ngIf="!day" class="btn btn-danger btn-sm btn-day" disabled>
+                                    {{days[i]}}
+                                </button>
+                            </div>
+                        </div>
+                    </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit" [routerLink]="['/bus', bus.id, 'view' ]" class="btn btn-info btn-sm">
