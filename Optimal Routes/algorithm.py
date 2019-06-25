@@ -4,38 +4,34 @@ import datetime
 
 
 class State:
-	def __init__(self, current_route: list, current_location: dict, current_time: datetime.datetime, available_route, weight = 0):
+	def __init__(self, current_route: list, current_time: datetime.datetime, available_route, weight = 0):
 		self.current_route = current_route
 		self.current_time = current_time
-		self.available_route = available_route
-		self.current_location = current_location
+		self.current_route.append(available_route)
 		self.weight = weight
 
 		self.compute_weight()
 
 	def compute_weight(self):
-		time = self.available_route['arrival_time']['text']
-		arrival = utils.create_datetime_from_date_and_string(self.current_time, time)
+		arrival = datetime.datetime.fromtimestamp(self.current_route[-1]['arrival_time']['value'])
 
 		time = arrival - self.current_time
 		self.weight += time.total_seconds() * 2
 
-		self.weight += self.available_route['duration']['value']
+		self.weight += self.current_route[-1]['duration']['value']
 
 		if len(self.current_route) == 0:
-			time = datetime.datetime.fromtimestamp(self.available_route['departure_time']['value'])
+			time = datetime.datetime.fromtimestamp(self.current_route[-1]['departure_time']['value'])
 			self.weight += (time - self.current_time).total_seconds()
 
 	def end_date_time(self):
-		return datetime.datetime.fromtimestamp(self.available_route['arrival_time']['value'])
+		return datetime.datetime.fromtimestamp(self.current_route[-1]['arrival_time']['value'])
 
 	def extract_route(self):
-		route = list(self.current_route)
-		route.append(self.available_route)
-		return route
+		return self.current_route
 
 	def is_not_suitable(self):
-		time = datetime.datetime.fromtimestamp(self.available_route['departure_time']['value'])
+		time = datetime.datetime.fromtimestamp(self.current_route[-1]['departure_time']['value'])
 		if (time - self.current_time).total_seconds() > (3600 * 12):
 			return True
 		
@@ -47,10 +43,10 @@ class State:
 		return False
 
 	def get_current_time(self):
-		return utils.create_datetime_from_date_and_string(self.current_time, self.available_route['arrival_time']['text'])
+		return utils.create_datetime_from_date_and_string(self.current_time, self.current_route[-1]['arrival_time']['text'])
 
 	def get_current_location(self):
-		return dict(self.available_route['end_location'])
+		return dict(self.current_route[-1]['end_location'])
 
 class Algorithm:
 	def __init__(self, data: dict, distance_function, max_responses):
@@ -97,35 +93,27 @@ class Algorithm:
 			time = current_time
 		else:
 			weight = best_route.weight
-			current_route = list(best_route.current_route)
-			current_route.append(best_route.available_route)
+			current_route = best_route.extract_route()
 			time = best_route.end_date_time()
 		for route in self.available_routes(dict(current_location), current_time, end_location):
-			result.append(State(list(current_route), dict(current_location), time, route, weight))
+			result.append(State(list(current_route), time, route, weight))
 		
 		directions = utils.retrieve_directions(current_location, end_location, current_time)
 		for route in directions:
-			result.append(State(list(current_route), dict(current_location), time, route, weight))
+			result.append(State(list(current_route), time, route, weight))
 		
 		return result
 
 	def get_best_state(self, states: list) -> State:
 		return sorted(states, key = lambda x : x.weight)[0]
-
-	def get_H_score(self, state):
-		distance1 = utils.haversine_distance(self.start_location, state.current_location)
-		if distance1 == 0:
-			return 0
-		distance2 = utils.haversine_distance(state.current_location, self.end_location)
-		return distance2 * state.weight / distance1
 		
 	def is_final(self, state: State):
-		if state.available_route.get('type', 0) == 'INTERNAL':
-			if state.available_route['end_location']['id'] == self.end_location['id']:
+		if state.current_route[-1].get('type', 0) == 'INTERNAL':
+			if state.get_current_location()['id'] == self.end_location['id']:
 				return True
 			return False
 		
-		dist = self.distance_function(self.end_location, state.available_route['end_location'])
+		dist = self.distance_function(self.end_location, state.get_current_location())
 		return dist < 50
 
 	def write_result(self):
@@ -142,8 +130,7 @@ class Algorithm:
 			if (bus['days'][current_time.weekday()] != '1'):
 				continue
 
-			bus_departure = datetime.datetime(current_time.year, current_time.month, current_time.day, int(
-				bus['departure_time']['text'].split(':')[0]), int(bus['departure_time']['text'].split(':')[1]))
+			bus_departure = utils.create_datetime_from_date_and_string(current_time, bus['departure_time']['text'])
 
 			if (bus_departure < current_time):
 				continue

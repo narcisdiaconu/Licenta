@@ -9,6 +9,7 @@
                     <th><span>From</span></th>
                     <th><span>To</span></th>
                     <th><span>Date</span></th>
+                    <th><span>Hour</span></th>
                     <th><span>Places</span></th>
                     <th><span>Price</span></th>
                     <th><span>Paid</span></th>
@@ -17,11 +18,12 @@
             </thead>
             <tbody>
                 <tr *ngFor="let ticket of tickets">
-                    <td *ngIf="ticket.startLocation !== undefined">{{ticket.startLocation.name}}</td>
-                    <td *ngIf="ticket.endLocation !== undefined">{{ticket.endLocation.name}}</td>
+                    <td *ngIf="ticket.startLocation !== undefined">{{ticket.startLocation.name}}, <span *ngIf="ticket.startLocation.city">{{ticket.startLocation.city.name}}</span></td>
+                    <td *ngIf="ticket.endLocation !== undefined">{{ticket.endLocation.name}}, <span *ngIf="ticket.endLocation.city">{{ticket.endLocation.city.name}}</span></td>
                     <td *ngIf="ticket.startLocation === undefined">{{ticket.startStation}}</td>
                     <td *ngIf="ticket.endLocation === undefined">{{ticket.endStation}}</td>
                     <td>{{ticket.date | date:'mediumDate'}}</td>
+                    <td><span *ngIf="ticket.busModel">{{ticket.busModel.departureTime}}</span></td>
                     <td>{{ticket.places}}</td>
                     <td>{{ticket.price}}</td>
                     <td>

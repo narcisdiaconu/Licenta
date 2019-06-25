@@ -1,14 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { HttpResponse, HttpClient } from '@angular/common/http';
+import { HttpResponse, HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
 export class OptimalRoutesService {
-    public resourceUrl = 'http://localhost:5000';
+    public resourceUrl = 'https://europe-west1-cloud-project-1558612167204.cloudfunctions.net/optimal-routes';
 
     constructor(private http: HttpClient) {}
 
     get(data: any): Observable<HttpResponse<any>> {
-        return this.http.post<any>(this.resourceUrl, data, { observe: 'response' });
+        const head = new HttpHeaders({ 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        return this.http.post<any>(this.resourceUrl, data, { headers: head, observe: 'response' });
     }
 }

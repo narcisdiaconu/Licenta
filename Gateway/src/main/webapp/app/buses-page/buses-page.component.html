@@ -34,8 +34,14 @@
 
         <div class="col-md-8 col-lg-8 col-sm-12">
             <h4><span class="summary-title">Details</span></h4>
-            <a (click)="enableMap()" [hidden]="showMapView">Show map view</a>
-            <a (click)="showMapView = !showMapView" [hidden]="!showMapView">Show text view</a>
+            <a (click)="enableMap()" [hidden]="showMapView">
+                <fa-icon icon="map-marked-alt" class="fa-lg"></fa-icon>
+                Map view
+            </a>
+            <a (click)="showMapView = !showMapView" [hidden]="!showMapView">
+                <fa-icon icon="align-justify" class="fa-lg"></fa-icon>
+                Text view
+            </a>
 
             <div class="col-md-10 col-lg-10 col-sm-12" [hidden]="showMapView">
                 <div class="selected-bus" *ngIf="selectedRoute !== undefined">
@@ -164,7 +170,10 @@
                 </select>
                 <div *ngIf="htmlInstructions">
                     <span>Instructions:</span><br>
-                    <p class="margin-none" *ngFor="let instr of htmlInstructions" [innerHTML]="instr"></p>
+                    <small class="margin-none form-text" *ngFor="let instr of htmlInstructions" [innerHTML]="instr"></small>
+                </div>
+                <div *ngIf="warnings">
+                    <small class="margin-none form-text text-danger" *ngFor="let warn of warnings" [innerHTML]="warn"></small>
                 </div>
             </div>
 

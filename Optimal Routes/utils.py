@@ -113,11 +113,11 @@ def retrieve_directions(start_location: dict, end_location: dict, departure_time
 	directions = gmaps.directions(start, end, mode='transit', departure_time=departure_time, alternatives=True)
 	result = []
 	for res in directions:
-		leg = convert_leg(res['legs'][0])
+		leg = convert_leg(res['legs'][0], res['warnings'])
 		result.append(leg)
 	return result
 
-def convert_leg(leg: dict):
+def convert_leg(leg: dict, warnings):
 	leg['arrival_time']['text'] = convert_from_12_to_24(leg['arrival_time']['text'])
 	leg['departure_time']['text'] = convert_from_12_to_24(leg['departure_time']['text'])
 	leg['duration']['text'] = convert_text_to_hour(leg['duration']['text'])
@@ -140,6 +140,7 @@ def convert_leg(leg: dict):
 			step['transit_details'] = convert_transit_details(step['transit_details'])
 		elif step['travel_mode'] == 'WALKING':
 			step['steps'] = convert_walking_steps(step['steps'])
+			step['warnings'] = warnings
 		
 		steps.append(step)
 	leg['steps'] = steps
@@ -265,7 +266,7 @@ def add_waitings(route):
 			if route[i+1]['type'] == 'INTERNAL':
 				route[i]['wait_time'] = dict(get_wait_time(route[i], route[i+1]))
 			elif route[i+1]['type'] == 'EXTERNAL':
-				route[i]['wait_time'] = dict(get_wait_time(route[i], route[i+1]['departure_time']))
+				route[i]['wait_time'] = dict(get_wait_time(route[i], route[i+1]))
 		else:
 			if route[i]['steps'][-1]['travel_mode'] == 'TRANSIT':
 				if route[i+1]['type'] == 'INTERNAL':
@@ -287,6 +288,7 @@ def get_wait_time(start, end):
 	wait_time['value'] = end['departure_time']['value'] - start['arrival_time']['value']
 	wait_time['text'] = convert_seconds_to_hour_minute_format(wait_time['value'])
 	return wait_time
+	
 
 def create_datetime_from_date_and_string(date, time):
 	return datetime.datetime(date.year, date.month, date.day, int(time.split(":")[0]), int(time.split(":")[1]))

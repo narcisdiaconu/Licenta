@@ -2,16 +2,12 @@
     <div class="card jh-card">
         <div class="nav">
             <p class="welcome">Welcome</p>
+            <h3 *ngIf="!isAuthenticated()">Start traveling with us</h3>
+            <button class="btn btn-lg btn-primary btn-custom" *ngIf="!isAuthenticated()" (click)="login()">Login</button>
         </div>
 
         <div class="row" *ngIf="isAuthenticated()">
             <div class="col-2 col-md-4 col-sm-3 col-lg-4">
-                <!-- <div class="list-container col-6">
-                    <ul class="list-group">
-                        <li id="Route" class="list-group-item active" (click)="changeView('Route')">Online booking</li>
-                        <li id="T&C" class="list-group-item" (click)="changeView('T&C')">Terms and conditions</li>
-                    </ul>
-                </div> -->
             </div>
             <div class="col-8 col-md-4 col-sm-6 col-lg-4">
                 <div [ngSwitch]="getView()">
@@ -48,10 +44,6 @@
                             <fa-icon [icon]="'search'"></fa-icon>&nbsp;<span>Search</span>
                         </button>
                     </form>
-
-                    <div *ngSwitchCase="'T&C'">
-                        Terms and conditions
-                    </div>
                 </div>
             </div>
             <div class="col-2 col-md-4 col-sm-3 col-lg-4">

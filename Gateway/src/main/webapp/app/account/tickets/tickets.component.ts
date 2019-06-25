@@ -12,6 +12,11 @@ import { NgbModalRef, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TicketRemoveModalComponent } from './tickets-remove.modal';
 import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
+import { BusService } from 'app/entities/buses/bus';
+import { IBus } from 'app/shared/model/buses/bus.model';
+import { CityService } from 'app/entities/stations/city';
+import { tick } from '@angular/core/testing';
+import { ICity } from 'app/shared/model/stations/city.model';
 
 @Component({
     selector: 'jhi-my-tickets',
@@ -31,7 +36,9 @@ export class MyTicketsComponent implements OnInit, OnDestroy {
         private router: Router,
         private stationService: StationService,
         private modalService: NgbModal,
-        protected eventManager: JhiEventManager
+        protected eventManager: JhiEventManager,
+        private busService: BusService,
+        private cityService: CityService
     ) {}
 
     ngOnInit() {
@@ -111,10 +118,15 @@ export class MyTicketsComponent implements OnInit, OnDestroy {
         tickets.forEach((ticket: ITicket) => {
             this.stationService.find(ticket.startStation).subscribe((res: HttpResponse<IStation>) => {
                 ticket.startLocation = res.body;
+                this.cityService
+                    .find(ticket.startLocation.cityId)
+                    .subscribe((r: HttpResponse<ICity>) => (ticket.startLocation.city = r.body));
             });
             this.stationService.find(ticket.endStation).subscribe((res: HttpResponse<IStation>) => {
                 ticket.endLocation = res.body;
+                this.cityService.find(ticket.endLocation.cityId).subscribe((r: HttpResponse<ICity>) => (ticket.endLocation.city = r.body));
             });
+            this.busService.find(ticket.bus).subscribe((res: HttpResponse<IBus>) => (ticket.busModel = res.body));
         });
     }
 }

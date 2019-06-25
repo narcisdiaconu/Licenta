@@ -1,7 +1,7 @@
 <div class="row justify-content-center">
     <div class="col-11 col-md-9 col-sm-11">
         <h3><span class="title">Booking details</span></h3>
-        <h5>Buses:</h5>
+        <h5>Buses</h5>
 
         <div class="buses-details col-12 col-md-8 col-lg-8">
             <div class="bus-details" *ngFor="let bus of buses">
@@ -111,21 +111,13 @@
                         <input class="form-control col-8 col-md-4 col-lg-4" type="number" id="totalPrice" name="totalPrice" readonly [(ngModel)]="totalPrice">
                     </div>
 
-                    <!-- <div class="col-auto">
-                        <label for="paymentMethod" class="col-form-label">Payment method:</label>
-                        <mat-select>
-                            <mat-option *ngFor="let payment of paymentMethods" [value]="payment.value">
-                                {{payment.label}}
-                            </mat-option>
-                        </mat-select>
-                    </div> -->
-
                 </div>
                 <small class="form-text text-info">Your information will be saved for future bookings.</small>
                 <small class="form-text text-info">You can view and update your data on <a [routerLink]="['/settings']" routerLinkActive="router-link-active" >your profile</a> page</small>
 
                 <button type="submit" [disabled]="settingsForm.form.invalid || ticketsNumber == 0" class="btn btn-primary submit-btn">Book</button>
                 <small class="form-text text-danger" *ngIf="bookingFailed">Somethin went wrong! Try again later!</small>
+                <button type="button" class="btn btn-primary submit-btn" (click)="back()">Previous page</button>
             </form>
         </div>
     </div>

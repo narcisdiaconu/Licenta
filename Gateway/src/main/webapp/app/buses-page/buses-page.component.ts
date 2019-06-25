@@ -53,6 +53,7 @@ export class BusesPageComponent implements OnInit {
     focusedLeg: any;
     waitingForBusesDirections: boolean;
     htmlInstructions: string;
+    warnings: string[] = [];
 
     constructor(
         private dataService: DataService,
@@ -266,6 +267,7 @@ export class BusesPageComponent implements OnInit {
 
         this.cannotGoToBooking = false;
         this.htmlInstructions = undefined;
+        this.warnings = undefined;
         this.loadOccupiedSeats(route);
         this.displayRouteOnMap(route);
     }
@@ -532,7 +534,7 @@ export class BusesPageComponent implements OnInit {
         coords.forEach(coord => bounds.extend(coord));
         const instructions = [];
         walk.steps.forEach(step => instructions.push(step.html_instructions));
-        return { path, startMarker, endMarker, name, bounds, html_instructions: instructions };
+        return { path, startMarker, endMarker, name, bounds, html_instructions: instructions, warnings: walk.warnings };
     }
 
     private displayTransitOnMap(transit) {
@@ -571,6 +573,7 @@ export class BusesPageComponent implements OnInit {
             this.fitOnMap(this.displayedLegs.find(leg => leg.id === this.selectedRoute.summary.id).bounds);
             this.showOldRoute(this.displayedRoute);
             this.htmlInstructions = undefined;
+            this.warnings = undefined;
         } else {
             this.displayedLegs
                 .find(leg => leg.id === this.selectedRoute.summary.id)
@@ -581,6 +584,7 @@ export class BusesPageComponent implements OnInit {
                         leg.endMarker.setMap(this.map);
                         this.fitOnMap(leg.bounds);
                         this.htmlInstructions = leg.html_instructions;
+                        this.warnings = leg.warnings;
                     } else {
                         leg.path.setMap(null);
                         leg.startMarker.setMap(null);

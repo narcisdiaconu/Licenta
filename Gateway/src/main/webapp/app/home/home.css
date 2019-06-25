@@ -63,6 +63,18 @@ Main page styles
     margin: 0;
 }
 
+.welcome {
+    font-size: 35px;
+}
+
+.btn-purple {
+    background-color: #8218f4;
+}
+
+.btn-custom {
+    size: 200px;
+}
+
 /* wait autoprefixer update to allow simple generation of high pixel density media query */
 
 @media only screen and (-webkit-min-device-pixel-ratio: 2),

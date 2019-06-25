@@ -112,6 +112,10 @@ export class BookingPageComponent implements OnInit {
         }
     }
 
+    back(): void {
+        this.location.back();
+    }
+
     private createTickets(user: IUserdetails) {
         this.createdTickets = [];
         this.buses.forEach(bus => {
@@ -121,7 +125,7 @@ export class BookingPageComponent implements OnInit {
                 bus.bus_id,
                 moment(new Date(bus.departure_time.value * 1000)),
                 this.ticketsNumber,
-                this.totalPrice,
+                this.ticketsNumber * bus.price,
                 false,
                 bus.start_location.id,
                 bus.end_location.id

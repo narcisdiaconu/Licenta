@@ -169,4 +169,6 @@ export class HomeComponent implements OnInit {
     getView() {
         return this.view;
     }
+
+    openLoginPopup() {}
 }
